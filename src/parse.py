@@ -8,7 +8,9 @@ import sys
 import threading
 from inspect import isfunction, isclass, getmembers, getmodule
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, Optional
+import typing
+import inspect
 
 class Function(object):
     """
@@ -42,36 +44,34 @@ class Constructor(object):
 def infer_type(function):
     """
 
-    :param function: generic function
-    :return: closure of input arguments and return type
+    :param function:
+    :return: the type information of the function or method
     """
+    signature = inspect.signature(function)
+    parameters = {}
+    hints = typing.get_type_hints(function)
+    for param_name in signature.parameters:
+        if param_name == "self":
+            continue
+        type_hint = hints.get(param_name, None)
+        type_hint = wrap_var_param_type(type_hint, signature.parameters[param_name].kind)
+        parameters[param_name] = type_hint
 
-    def resolve_recursively(input_type):
-        if type(input_type).__name__ == 'type':
-            return input_type.__name__
-        elif type(input_type).__name__ == 'tuple':
-            r = []
-            for x in list(input_type):
-                t = resolve_recursively(x)
-                r.append(t)
-            return tuple(r)
-        else:
-            raise NotImplementedError
+    ret_type = hints.get('return', None)
 
-    input_args = []
-    for k,v in function.__annotations__.items():
-        true_type = resolve_recursively(v)
-        if k != 'return':
-            input_args.append((k, true_type))
-    ret_type = function.__annotations__.setdefault('return').__name__
+    return signature, parameters, ret_type
 
-    return input_args, ret_type
+def wrap_var_param_type(type_, param_kind):
 
-
-
-
-def read_module(path_to_module, module_name):
-    pass
+    if param_kind == inspect.Parameter.VAR_POSITIONAL:
+        if type_ is None:
+            return typing.List[typing.Any]
+        return typing.List[type_]  # type: ignore
+    if param_kind == inspect.Parameter.VAR_KEYWORD:
+        if type_ is None:
+            return typing.Dict[str, typing.Any]
+        return typing.Dict[str, type_]  # type: ignore
+    return type_
 
 
 class Foo():
@@ -85,11 +85,14 @@ def add(a: Foo, b: Foo) -> Foo:
 def class_in_module(module):
     return lambda member: isclass(member) and member.__module__ == module.__name__
 
-def function_in_module ( module: str ):
+
+def function_in_module(module: str):
     return lambda member: isfunction( member ) and member.__module__ == module.__name__
-    
-def is_protected ( function_name ):
+
+
+def is_protected(function_name):
     return function_name.startswith('_')
+
 
 def add_dependency(klass, analyzed_classes):
     if klass in analyzed_classes:
@@ -103,7 +106,6 @@ def add_dependency(klass, analyzed_classes):
         
     return analyzed_classes
 
-    
         
 if __name__ == "__main__":
     sys.path.append(str(Path().parent.absolute()))
@@ -120,6 +122,5 @@ if __name__ == "__main__":
 
     for _, klass in classes_in_module:
         analyzed_classes = add_dependency(klass, analyzed_classes)
-
 
 
