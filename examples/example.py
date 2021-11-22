@@ -7,10 +7,10 @@
 
 import queue_example
 from queue_example import Queue
-# from typing import Tuple
+from typing import Tuple
 
 
-def triangle(x: (int, int, int), y: int, z: int) -> str:
+def triangle(x: Tuple[int, int, int], y: int, z: int) -> str:
     if x[0] == y == z:
         return "Equilateral triangle"
     elif x[0] == y or y == z or x == z:
