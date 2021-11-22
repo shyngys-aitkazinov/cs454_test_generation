@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 import threading
+from inspect import isfunction, isclass, getmembers, getmodule
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
@@ -19,10 +20,18 @@ class Foo():
 def add(a: Foo, b: Foo) -> Foo:
     return a + b
 
-if __name__ == "__main__":
+def class_in_module ( module: str):
+    return lambda member: isclass(member) and member.__module__ == module.__name__
 
-    module = importlib.import_module("examples.example", str(Path().parent.absolute().parent))
-    print(add("s", "s"))
+def function_in_module ( module: str ):
+    return lambda member: isfunction( member ) and member.__module__ == module.__name__
+    
+if __name__ == "__main__":
+    sys.path.append(str(Path().parent.absolute()))
+    module = importlib.import_module("examples.example")
+    classes_in_module = getmembers( module, class_in_module( module ) )
+    functions_in_module =  getmembers( module, function_in_module( module ) )
+
 
 
 
