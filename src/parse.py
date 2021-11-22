@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 import threading
-from inspect import isfunction, isclass, getmembers, getmodule
+from inspect import isfunction, isclass, getmembers, ismethod, getmro
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 import typing
@@ -88,6 +88,21 @@ def class_in_module(module):
 
 def function_in_module(module: str):
     return lambda member: isfunction( member ) and member.__module__ == module.__name__
+    
+def is_protected ( function_name ):
+    return function_name.startswith('_') and not function_name.startswith('__')
+
+
+def method_defined_in_class ( klass, method ):
+    #get class that defined method
+    print( method )
+    print( ismethod( method ) )
+    if ( ismethod( method)):
+        print( getmro(method.__self__.__class__))
+        # elif (isfunction( method )):
+
+    # defined_class =
+    return True
 
 
 def is_protected(function_name):
@@ -99,11 +114,14 @@ def add_dependency(klass, analyzed_classes):
         print("Analyzed class")
         return analyzed_classes
     analyzed_classes.append(klass)
-    construct = Constructor(klass, infer_type(klass.__init__))
+    # construct = Constructor(klass, infer_type(klass.__init__))
     #add dependency
     for method_name, method in getmembers(klass, isfunction):
-        method = Method(method_name, method, infer_type(method))
-        
+        # method = Method(method_name, method, infer_type(method))
+        print( method_name)
+        method_defined_in_class( klass, method)
+        if ( is_constructor( method ) or is_protected( method_name ) or not method_defined_in_class( klass, method)):
+            continue
     return analyzed_classes
 
         
@@ -122,5 +140,6 @@ if __name__ == "__main__":
 
     for _, klass in classes_in_module:
         analyzed_classes = add_dependency(klass, analyzed_classes)
+
 
 
