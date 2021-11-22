@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 import threading
-from inspect import isfunction, isclass, getmembers, getmodule
+from inspect import isfunction, isclass, getmembers, ismethod, getmro
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
@@ -38,6 +38,9 @@ class Constructor(object):
     def get_type(self):
         return self.ctype
 
+
+def is_constructor( method ):
+    return method.__name__ == "__init__"
 
 def infer_type(function):
     """
@@ -89,18 +92,33 @@ def function_in_module ( module: str ):
     return lambda member: isfunction( member ) and member.__module__ == module.__name__
     
 def is_protected ( function_name ):
-    return function_name.startswith('_')
+    return function_name.startswith('_') and not function_name.startswith('__')
+
+
+def method_defined_in_class ( klass, method ):
+    #get class that defined method
+    print( method ) 
+    print( ismethod( method ) )
+    if ( ismethod( method)):
+        print( getmro(method.__self__.__class__))
+        # elif (isfunction( method )):
+        
+    # defined_class = 
+    return True
 
 def add_dependency(klass, analyzed_classes):
     if klass in analyzed_classes:
         print("Analyzed class")
         return analyzed_classes
     analyzed_classes.append(klass)
-    construct = Constructor(klass, infer_type(klass.__init__))
+    # construct = Constructor(klass, infer_type(klass.__init__))
     #add dependency
     for method_name, method in getmembers(klass, isfunction):
-        method = Method(method_name, method, infer_type(method))
-        
+        # method = Method(method_name, method, infer_type(method))
+        print( method_name)
+        method_defined_in_class( klass, method)
+        if ( is_constructor( method ) or is_protected( method_name ) or not method_defined_in_class( klass, method)):
+            continue
     return analyzed_classes
 
     
@@ -108,12 +126,11 @@ def add_dependency(klass, analyzed_classes):
 if __name__ == "__main__":
     sys.path.append(str(Path().parent.absolute()))
     sys.path.append(str(Path().parent.absolute()) + "\\examples")
-    test_module = importlib.import_module("examples.example")
+    test_module = importlib.import_module("examples.queue_example")
     classes_in_module = getmembers(test_module, class_in_module(test_module))
     functions_in_module = getmembers(test_module, function_in_module(test_module))
     one_function = functions_in_module[0][1]
     analyzed_classes = list()
-    t = infer_type(one_function)
     for function_name, func in functions_in_module:
         if is_protected(function_name):
             continue
