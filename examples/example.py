@@ -5,6 +5,8 @@
 #  SPDX-License-Identifier: LGPL-3.0-or-later
 #
 
+import queue_example
+
 
 def triangle(x: int, y: int, z: int) -> str:
     if x == y == z:

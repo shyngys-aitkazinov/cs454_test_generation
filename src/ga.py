@@ -65,6 +65,7 @@ class AbstractGA(ABC):
         :return:
         """
 
+    @abstractmethod
     def run_ga(self, epochs):
         """
         perform a full cycle of gas until termination conditions

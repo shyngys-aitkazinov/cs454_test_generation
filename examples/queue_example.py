@@ -42,3 +42,7 @@ class Queue:
         if self.head == self.max:
             self.head = 0
         return x
+
+
+def dummyadd(a: int, b: int) -> int:
+    return a + b
