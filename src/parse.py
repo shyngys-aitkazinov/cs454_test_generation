@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Optional
 import typing
 import inspect
 import utils
+from testcase import *
 
 
 class Function(object):
@@ -210,7 +211,8 @@ if __name__ == "__main__":
     sys.path.append(str(Path().parent.absolute()))
     sys.path.append(str(Path().parent.absolute()) + "\\examples")
     t = TestCluster()
-    t.generate_cluster("examples.example")
+    module_name = "example"
+    t.generate_cluster("examples." + module_name)
     # test_module = importlib.import_module("examples.example")
     # classes_in_module = getmembers(test_module, class_in_module(test_module))
     # functions_in_module = getmembers(test_module, function_in_module(test_module))
@@ -227,6 +229,11 @@ if __name__ == "__main__":
     #
     # for _, klass in classes_in_module:
     #     analyzed_classes = add_dependency(klass, analyzed_classes)
+    [function_for_testing] = t.objects_under_test
+    testcase = FunctionTestcase( function_for_testing, module_name)
+    testcase.generate_random_testcase()
+    testcase.write_in_file()
+    print( testcase.statement_description)
 
 
 
