@@ -30,3 +30,18 @@ class AbstractStatement(ABC):
         # TODO: might need more attributes
 
 
+class PrimitiveStatement ( AbstractStatement ):
+    def __init__( self, statement_type, statement_value, statement_variable):
+        self.statement_type = statement_type
+        self.statement_variable = statement_variable
+        self.statement_value = statement_value
+
+class FunctionStatement ( AbstractStatement ):
+    def __init__ (self, statement_type, function_name, func, arg_list, statement_variable = None):
+        self.statement_type = statement_type
+        self.function_name = function_name
+        self.statement_variable = statement_variable
+        self.func = func
+        self.arg_list = arg_list
+
+

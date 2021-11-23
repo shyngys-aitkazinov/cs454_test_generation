@@ -5,23 +5,12 @@
 #  SPDX-License-Identifier: LGPL-3.0-or-later
 #
 
-import queue_example
-from queue_example import Queue
-from typing import Tuple
 
-
-def triangle(x: Tuple[int, int, int], y: int, z: int) -> str:
-    if x[0] == y == z:
+def triangle(x: int, y: int, z: int) -> str:
+    if x == y == z:
         return "Equilateral triangle"
-    elif x[0] == y or y == z or x == z:
+    elif x == y or y == z or x == z:
         return "Isosceles triangle"
     else:
         return "Scalene triangle"
 
-
-class A:
-    def __init__(self):
-        pass
-
-    def f(self, data: str) -> None:
-        print(data)
