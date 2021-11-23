@@ -43,16 +43,16 @@ class FunctionTestcase(AbstractTestcase):
         function_name = self.function_info.function_name
         func = self.function_info.function
         args = ftype[0]
+        print( args )
         rettype = ftype[1]
 
         function_args = []
 
         self.add_module_import()
-
-        for i in args:
-            if i[0] not in function_args:
-                self.generate_assignment(i)
-                function_args.append(i[0])
+        for key, value in args.parameters.items():
+            if key not in function_args:
+                self.generate_assignment(value)
+                function_args.append(key)
 
         statement = self.module_name + "." + function_name + "( " + ', '.join(function_args) +" )"
         function_var = self.generate_variable_name()
@@ -67,9 +67,10 @@ class FunctionTestcase(AbstractTestcase):
         self.statement_list.append(statement)
         return
 
-    def generate_assignment(self, assignment):
-        variable_name = assignment[0]
-        variable_type = assignment[1]
+    def generate_assignment(self, value):
+        split_value = str(value).split(': ')
+        variable_name = split_value[0]
+        variable_type = split_value[1]
         value = self.get_value_for_type(variable_type)
         statement = variable_name + " = " + str(value)
         statement_description =  PrimitiveStatement( variable_type, value, variable_name)
