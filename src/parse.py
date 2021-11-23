@@ -9,6 +9,7 @@ import threading
 from inspect import isfunction, isclass, getmembers, ismethod, getmro
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple
+import testcase
 
 class Function(object):
     """
@@ -59,6 +60,7 @@ def infer_type(function):
                 r.append(t)
             return tuple(r)
         else:
+            print( type(input_type).__name__)
             raise NotImplementedError
 
     input_args = []
@@ -126,17 +128,28 @@ def add_dependency(klass, analyzed_classes):
 if __name__ == "__main__":
     sys.path.append(str(Path().parent.absolute()))
     sys.path.append(str(Path().parent.absolute()) + "\\examples")
-    test_module = importlib.import_module("examples.queue_example")
+    module_name = "example"
+    test_module = importlib.import_module("examples." + module_name)
     classes_in_module = getmembers(test_module, class_in_module(test_module))
     functions_in_module = getmembers(test_module, function_in_module(test_module))
     one_function = functions_in_module[0][1]
     analyzed_classes = list()
+    functions_list = []
+    print( functions_in_module)
     for function_name, func in functions_in_module:
         if is_protected(function_name):
             continue
+        generic_function = Function(function_name, func, infer_type(func))
+        print( generic_function.ftype)
+        functions_list.append(generic_function)
 
-    for _, klass in classes_in_module:
-        analyzed_classes = add_dependency(klass, analyzed_classes)
+    print( functions_list )
+    testcase = testcase.FunctionTestcase(functions_list[0], module_name)
+    testcase.generate_random_testcase()
+    testcase.write_in_file()
+
+    # for _, klass in classes_in_module:
+    #     analyzed_classes = add_dependency(klass, analyzed_classes)
 
 
 
