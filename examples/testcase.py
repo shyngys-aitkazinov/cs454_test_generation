@@ -1,5 +1,5 @@
 import example
-x = -591
-y = -50
-z = -216
+x = -174
+y = 12
+z = -887
 v0 = example.triangle( x, y, z )

@@ -5,6 +5,7 @@ import string
 import parse
 import os
 from pathlib import Path
+from statement import *
 
 class AbstractTestcase(ABC):
 
@@ -35,11 +36,12 @@ class FunctionTestcase(AbstractTestcase):
         self.module_name = module_name
         self.count = 0
         self.statement_list = []
+        self.statement_description = []
     
     def generate_random_testcase(self):
         ftype = self.function_info.ftype
         function_name = self.function_info.function_name
-
+        func = self.function_info.function
         args = ftype[0]
         rettype = ftype[1]
 
@@ -53,10 +55,12 @@ class FunctionTestcase(AbstractTestcase):
                 function_args.append(i[0])
 
         statement = self.module_name + "." + function_name + "( " + ', '.join(function_args) +" )"
-        if rettype != "None":
-            function_var = self.generate_variable_name()
-            statement = function_var + " = " + statement
+        function_var = self.generate_variable_name()
+        statement = function_var + " = " + statement
+        statement_description = FunctionStatement(ftype, function_name, func, function_args, function_var)
         self.statement_list.append(statement)
+        self.statement_description.append(statement_description)
+        print()
         
     def add_module_import(self):
         statement = "import " + self.module_name 
@@ -68,7 +72,9 @@ class FunctionTestcase(AbstractTestcase):
         variable_type = assignment[1]
         value = self.get_value_for_type(variable_type)
         statement = variable_name + " = " + str(value)
+        statement_description =  PrimitiveStatement( variable_type, value, variable_name)
         self.statement_list.append(statement)
+        self.statement_description.append( statement_description )
 
     def generate_variable_name( self ):
         variable = "v" + str(self.count)

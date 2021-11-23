@@ -146,6 +146,7 @@ if __name__ == "__main__":
     print( functions_list )
     testcase = testcase.FunctionTestcase(functions_list[0], module_name)
     testcase.generate_random_testcase()
+    print(testcase.statement_description)
     testcase.write_in_file()
 
     # for _, klass in classes_in_module:
