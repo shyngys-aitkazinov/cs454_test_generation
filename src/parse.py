@@ -180,6 +180,10 @@ class TestCluster:
         if include:
             self.objects_under_test.add(method)
 
+        if not(method.klass in self.modifiers):
+            self.modifiers[method.klass] = set()
+        self.modifiers[method.klass].add(method)
+
         if ret_type is None or ret_type is type(None) or ret_type in utils.PRIMITIVES:
             return
 
