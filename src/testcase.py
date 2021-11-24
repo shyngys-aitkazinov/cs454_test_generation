@@ -42,16 +42,17 @@ class FunctionTestcase(AbstractTestcase):
         ftype = self.function_info.ftype
         function_name = self.function_info.function_name
         func = self.function_info.function
-        args = ftype[0]
+        args = ftype[1]
+        print(ftype)
         print( args )
-        rettype = ftype[1]
+        rettype = ftype[2]
 
         function_args = []
 
         self.add_module_import()
-        for key, value in args.parameters.items():
+        for key, value in args.items():
             if key not in function_args:
-                self.generate_assignment(value)
+                self.generate_assignment(key, value)
                 function_args.append(key)
 
         statement = self.module_name + "." + function_name + "( " + ', '.join(function_args) +" )"
@@ -67,10 +68,9 @@ class FunctionTestcase(AbstractTestcase):
         self.statement_list.append(statement)
         return
 
-    def generate_assignment(self, value):
-        split_value = str(value).split(': ')
-        variable_name = split_value[0]
-        variable_type = split_value[1]
+    def generate_assignment(self, key, value):
+        variable_name = key
+        variable_type = value
         value = self.get_value_for_type(variable_type)
         statement = variable_name + " = " + str(value)
         statement_description =  PrimitiveStatement( variable_type, value, variable_name)
@@ -84,10 +84,10 @@ class FunctionTestcase(AbstractTestcase):
 
     def get_value_for_type ( self, type):
         switch = {
-            "int": random.randint( -1000, 1000),
-            "boolean": bool(random.getrandbits(1)),
-            "float": random.random(),
-            "str": ''.join(random.choices(string.ascii_lowercase + string.digits, k = 10))
+            int: random.randint( -1000, 1000),
+            bool: bool(random.getrandbits(1)),
+            float: random.random(),
+            str: ''.join(random.choices(string.ascii_lowercase + string.digits, k = 10))
         }
         return switch.get(type)
 
