@@ -6,6 +6,8 @@ import parse
 import os
 from pathlib import Path
 from statement import *
+# from examples.queue_example import Queue
+
 
 class AbstractTestcase(ABC):
 
@@ -43,9 +45,9 @@ class FunctionTestcase(AbstractTestcase):
         function_name = self.function_info.function_name
         func = self.function_info.function
         args = ftype[1]
-        print(ftype)
-        print( args )
-        rettype = ftype[2]
+        # print(ftype)
+        # print( args )
+        # rettype = ftype[2]
 
         function_args = []
 
@@ -61,7 +63,7 @@ class FunctionTestcase(AbstractTestcase):
         statement_description = FunctionStatement(ftype, function_name, func, function_args, function_var)
         self.statement_list.append(statement)
         self.statement_description.append(statement_description)
-        print()
+        return self.statement_list , self.statement_description
         
     def add_module_import(self):
         statement = "import " + self.module_name 
@@ -92,8 +94,8 @@ class FunctionTestcase(AbstractTestcase):
         return switch.get(type)
 
     def write_in_file (self):
-        file_name = "testcase.py"
-        folder_path = str(Path().absolute()) + '\\examples'
+        file_name = "testcase"+str(random.random()*10) +".py" 
+        folder_path = str(Path().absolute()) 
         path = os.path.join(folder_path,file_name)
         f = open( path, "w")
         for i in self.statement_list:
@@ -104,9 +106,24 @@ class FunctionTestcase(AbstractTestcase):
 
            
         
+def triangle(x: int, y: int, z: int) -> str:
+    if x == y == z:
+        return "Equilateral triangle"
+    elif x == y or y == z or x == z:
+        return "Isosceles triangle"
+    else:
+        return "Scalene triangle"
 
 
 
+# k = parse.infer_type(examples.e)
+# j = Queue(20)
 
-    
-
+# print(k)
+triangle.ftype = [[5,6,3], {"x":str, "y": int, "z":int}, [34,45,235]]
+triangle.function_name = "traingle"
+triangle.function = triangle
+a = FunctionTestcase(triangle, "array")
+b = a.generate_random_testcase()
+print(b)
+# a.write_in_file()

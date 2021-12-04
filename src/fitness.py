@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-
+import random
 
 class AbstractFitness(ABC):
 
@@ -18,5 +18,11 @@ class AbstractFitness(ABC):
         :param kwargs:
         :return: single value
         """
+        return 
+class fitness(AbstractFitness):
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def calculate_fitness(*args, **kwargs):
 
-
+        return int(20*random.random())
