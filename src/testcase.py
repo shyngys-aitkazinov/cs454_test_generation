@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from statement import *
 
+
 class AbstractTestcase(ABC):
 
     def __init__(self):
@@ -30,75 +31,69 @@ class AbstractTestcase(ABC):
         :return: the new testcase
         """
 
-class FunctionTestcase(AbstractTestcase):
-    def __init__(self, function_info : parse.Function, module_name: str):
-        self.function_info = function_info
+class Testcase(AbstractTestcase):
+
+    def __init__(self, module_name: str, objects_under_test, limit ):
+        # self.function_info = function_info
         self.module_name = module_name
         self.count = 0
         self.statement_list = []
         self.statement_description = []
+        self.objects_under_test = objects_under_test
+        self.limit = limit
     
     def generate_random_testcase(self):
-        ftype = self.function_info.ftype
-        function_name = self.function_info.function_name
-        func = self.function_info.function
-        args = ftype[1]
-        print(ftype)
-        print( args )
-        rettype = ftype[2]
+        # Add import statement
+        import_statement = ImportStatement(self.module_name)
+        import_statement.generate_statement()
+        self.statement_description.append( import_statement )
+        self.statement_list.append( import_statement.statement )
 
-        function_args = []
+        #Retrieve objects_under_test randomly and make corresponding statements
+        while ( len( self.objects_under_test) > 0 and  len( self.statement_list ) < self.limit ):
+            test_obj = random.choice(list(self.objects_under_test) )
+            test_obj_type = type( test_obj).__name__
 
-        self.add_module_import()
-        for key, value in args.items():
-            if key not in function_args:
-                self.generate_assignment(key, value)
-                function_args.append(key)
+            if  test_obj_type == "Function" :
+                arg_list = []
+                for _, value in test_obj.ftype[1].items():
+                    var_name = self.generate_variable_name()
+                    statement = PrimitiveStatement(value, var_name)
+                    statement.generate_statement()
 
-        statement = self.module_name + "." + function_name + "( " + ', '.join(function_args) +" )"
-        function_var = self.generate_variable_name()
-        statement = function_var + " = " + statement
-        statement_description = FunctionStatement(ftype, function_name, func, function_args, function_var)
-        self.statement_list.append(statement)
-        self.statement_description.append(statement_description)
-        print()
-        
-    def add_module_import(self):
-        statement = "import " + self.module_name 
-        self.statement_list.append(statement)
-        return
+                    self.statement_description.append(statement)
+                    self.statement_list.append( statement.statement )
+                    arg_list.append( var_name )
+            
+                func_var = self.generate_variable_name()
+                print( func_var )
+                func_statement =  FunctionStatement(test_obj.ftype, test_obj.function_name , test_obj.function, arg_list, func_var)
+                func_statement.generate_statement()
+                self.statement_description.append( func_statement)
+                self.statement_list.append( func_statement.statement )
 
-    def generate_assignment(self, key, value):
-        variable_name = key
-        variable_type = value
-        value = self.get_value_for_type(variable_type)
-        statement = variable_name + " = " + str(value)
-        statement_description =  PrimitiveStatement( variable_type, value, variable_name)
-        self.statement_list.append(statement)
-        self.statement_description.append( statement_description )
+            
+            
 
-    def generate_variable_name( self ):
+    def generate_variable_name(self):
         variable = "v" + str(self.count)
         self.count += 1
         return variable
-
-    def get_value_for_type ( self, type):
-        switch = {
-            int: random.randint( -1000, 1000),
-            bool: bool(random.getrandbits(1)),
-            float: random.random(),
-            str: ''.join(random.choices(string.ascii_lowercase + string.digits, k = 10))
-        }
-        return switch.get(type)
+       
 
     def write_in_file (self):
         file_name = "testcase.py"
-        folder_path = str(Path().absolute()) + '\\examples'
+        folder_path = str(Path().absolute()) + '/examples'
         path = os.path.join(folder_path,file_name)
         f = open( path, "w")
         for i in self.statement_list:
             f.write(i + "\n")
         f.close()
+
+
+        
+
+
 
     
 

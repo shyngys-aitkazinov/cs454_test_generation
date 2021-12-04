@@ -1,5 +1,9 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+import testcase
+import random
+import string
+
 
 
 class StatementType:
@@ -29,12 +33,35 @@ class AbstractStatement(ABC):
         self.arg_list = arg_list
         # TODO: might need more attributes
 
+class ImportStatement( AbstractStatement ):
+    def __init__(self, module):
+        self.module = module 
+        self.statement = ""
+
+    def generate_statement(self ):
+        self.statement = "from " + self.module + " import *"
 
 class PrimitiveStatement ( AbstractStatement ):
-    def __init__( self, statement_type, statement_value, statement_variable):
+    def __init__( self, statement_type, statement_variable):
         self.statement_type = statement_type
         self.statement_variable = statement_variable
-        self.statement_value = statement_value
+        self.statement = ""
+        self.statement_value = None
+      
+    def generate_random_value( self ):
+        switch = {
+            int: random.randint( -1000, 1000),
+            bool: bool(random.getrandbits(1)),
+            float: random.random(),
+            str: ''.join(random.choices(string.ascii_lowercase + string.digits, k = 10))
+        }
+        self.statement_value =  switch.get(self.statement_type)
+
+    def generate_statement( self ):
+        if ( self.statement_value is None):
+            self.generate_random_value()
+        
+        self.statement = self.statement_variable + " = " + str( self.statement_value )
 
 class FunctionStatement ( AbstractStatement ):
     def __init__ (self, statement_type, function_name, func, arg_list, statement_variable = None):
@@ -43,5 +70,18 @@ class FunctionStatement ( AbstractStatement ):
         self.statement_variable = statement_variable
         self.func = func
         self.arg_list = arg_list
+        self.statement = ""
+
+    def generate_statement( self ):
+        statement = ""
+        if self.statement_variable is not None:
+            statement += ( self.statement_variable + " = " )
+        statement += self.function_name + "( " + ', '.join(self.arg_list) +" )"
+        self.statement = statement
+
+
+# class ClassStatement ( AbstractStatement ):
+#     def __init__ ( self, statement_type, class_name, ):
+
 
 

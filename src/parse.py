@@ -12,7 +12,9 @@ from typing import TYPE_CHECKING, Optional
 import typing
 import inspect
 import utils
-from testcase import *
+# from testcase import *
+import testsuite
+
 
 
 class Function(object):
@@ -209,31 +211,17 @@ class TestCluster:
 
 if __name__ == "__main__":
     sys.path.append(str(Path().parent.absolute()))
-    sys.path.append(str(Path().parent.absolute()) + "\\examples")
+    sys.path.append(str(Path().parent.absolute()) + "/examples")
     t = TestCluster()
     module_name = "example"
-    t.generate_cluster("examples." + module_name)
-    # test_module = importlib.import_module("examples.example")
-    # classes_in_module = getmembers(test_module, class_in_module(test_module))
-    # functions_in_module = getmembers(test_module, function_in_module(test_module))
-    # one_function = functions_in_module[0][1]
-    # analyzed_classes = list()
-    # t = infer_type(one_function)
-    # for function_name, func in functions_in_module:
-    #     if is_protected(function_name):
-    #         continue
-    #     f = Function(function_name, func, infer_type(func))
-    #     # add function to cluster
-    # for _, klass in inspect.getmembers(module, class_in_module(self._module_name)):
-    #     self._add_dependency(klass, 1, True)
-    #
-    # for _, klass in classes_in_module:
-    #     analyzed_classes = add_dependency(klass, analyzed_classes)
-    [function_for_testing] = t.objects_under_test
-    testcase = FunctionTestcase( function_for_testing, module_name)
-    testcase.generate_random_testcase()
-    testcase.write_in_file()
-    print( testcase.statement_description)
+    t.generate_cluster("examples." + module_name)   
+    test_suite = testsuite.TestSuite( 2, module_name, t)
+    test_suite.generate_random_test_suite()
+
+
+
+
+  
 
 
 

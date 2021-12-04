@@ -1,5 +1,4 @@
-import example
-x = 495
-y = -480
-z = -460
-v0 = example.triangle( x, y, z )
+v0 = 702
+v1 = 370
+v2 = 537
+v3 = example.triangle( v0, v1, v2 )
