@@ -1,16 +1,11 @@
-import example
-
 import coverage
-
-cov = coverage.Coverage()
+cov = coverage.Coverage() 
 cov.start()
-
-x = 495
-y = -480
-z = -460
+import example
+x = 4
+y = 916
+z = 487
 v0 = example.triangle( x, y, z )
-
 cov.stop()
 cov.save()
-
 cov.json_report()
