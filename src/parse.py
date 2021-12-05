@@ -13,7 +13,7 @@ import typing
 import inspect
 import utils
 from testcase import *
-
+import testsuite
 
 class Function(object):
     """
