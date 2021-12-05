@@ -4,7 +4,7 @@
 #
 #  SPDX-License-Identifier: LGPL-3.0-or-later
 #
-
+import queue_example
 
 def triangle(x: int, y: int, z: int) -> str:
     if x == y == z:
@@ -14,3 +14,6 @@ def triangle(x: int, y: int, z: int) -> str:
     else:
         return "Scalene triangle"
 
+
+def addQueue(q: queue_example.Queue, m: int) -> None:
+    q.enqueue(m)

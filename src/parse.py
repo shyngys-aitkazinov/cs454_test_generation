@@ -14,10 +14,14 @@ import inspect
 import utils
 import testsuite
 
+MAX_RECURSION_LEVEL = 20
+
+
 class Function(object):
     """
     class representing simple functions
     """
+
     def __init__(self, function_name, function, ftype=None):
         self.function_name = function_name
         self.function = function
@@ -52,7 +56,8 @@ def infer_type(function):
         if param_name == "self":
             continue
         type_hint = hints.get(param_name, None)
-        type_hint = wrap_var_param_type(type_hint, signature.parameters[param_name].kind)
+        type_hint = wrap_var_param_type(
+            type_hint, signature.parameters[param_name].kind)
         parameters[param_name] = type_hint
 
     ret_type = hints.get('return', None)
@@ -119,11 +124,13 @@ class TestCluster:
     Cluster that collects and organizes methods, functions, classes for
     further generation
     """
+
     def __init__(self):
         self.generators = dict()
         self.modifiers = dict()
         self.objects_under_test = set()
         self.analyzed_classes = set()
+        self.unresolved_classes = set()
 
     def generate_cluster(self, module_name, pkg=None):
         module = importlib.import_module(module_name, pkg)
@@ -138,14 +145,20 @@ class TestCluster:
         for klass_name, klass in classes_in_module:
             self.add_class(klass, klass_name, 1, True)
 
+        self.resolve_dependencies()
+
     def add_class(self, klass, klass_name, recursion_level, include):
 
         assert (inspect.isclass(klass))
-        # methods = []
+
+        if recursion_level >= MAX_RECURSION_LEVEL:
+            return
+
         if klass in self.analyzed_classes:
             return
         if hasattr(klass, "__init__"):
-            constructor = Constructor(klass, klass_name, infer_type(klass.__init__))
+            constructor = Constructor(
+                klass, klass_name, infer_type(klass.__init__))
         else:
             constructor = Constructor(klass, klass_name, (None, {}, None))
 
@@ -153,18 +166,38 @@ class TestCluster:
 
         for method_name, method in inspect.getmembers(klass, inspect.isfunction):
 
-            temp_method = Method(method_name, klass, method, infer_type(method))
+            temp_method = Method(method_name, klass,
+                                 method, infer_type(method))
 
             if is_constructor(method_name) or is_protected(method_name) or \
                     not method_defined_in_class(method, klass):
                 continue
             self.add_method(temp_method, include)
 
-    def add_function(self, function: Function, include):
+        self.analyzed_classes.add(klass)
+
+    def add_function(self, function: Function, include, recursion_level=1):
+        if recursion_level >= MAX_RECURSION_LEVEL:
+            return
+
         ret_type = function.ftype[2]
 
         if include:
             self.objects_under_test.add(function)
+
+        for param_name, type_hint in function.ftype[1].items():
+            # print(param_name, type_hint)
+            if type_hint in utils.PRIMITIVES:
+                # print("Not following primitive argument.")
+                continue
+
+            if inspect.isclass(type_hint):
+
+                # print("Adding dependency for class %s", param_name)
+                self.unresolved_classes.add((type_hint, recursion_level + 1))
+            else:
+                print("Found typing annotation %s, skipping" % param_name)
+                # (fk) fully support typing annotations.
 
         if ret_type is None or ret_type is type(None) or ret_type in utils.PRIMITIVES:
             return
@@ -173,8 +206,10 @@ class TestCluster:
             self.generators[ret_type] = set()
         self.generators[ret_type].add(function)
 
-    def add_method(self, method, include):
+    def add_method(self, method, include, recursion_level=1):
         ret_type = method.mtype[2]
+        if recursion_level >= MAX_RECURSION_LEVEL:
+            return
 
         if include:
             self.objects_under_test.add(method)
@@ -186,11 +221,28 @@ class TestCluster:
         if ret_type is None or ret_type is type(None) or ret_type in utils.PRIMITIVES:
             return
 
+        for param_name, type_hint in method.mtype[1].items():
+            # print(param_name, type_hint)
+            if type_hint in utils.PRIMITIVES:
+                # print("Not following primitive argument.")
+                continue
+
+            if inspect.isclass(type_hint):
+
+                # print("Adding dependency for class %s", param_name)
+                self.unresolved_classes.add((type_hint, recursion_level + 1))
+            else:
+                print("Found typing annotation %s, skipping" % param_name)
+                # (fk) fully support typing annotations.
+
         if not (ret_type in self.generators):
             self.generators[ret_type] = set()
         self.generators[ret_type].add(method)
 
-    def add_constructor(self, constructor, include):
+    def add_constructor(self, constructor, include, recursion_level=1):
+        if recursion_level >= MAX_RECURSION_LEVEL:
+            return
+
         ret_type = constructor.klass
 
         if include:
@@ -199,22 +251,39 @@ class TestCluster:
         if ret_type is None or ret_type is type(None) or ret_type in utils.PRIMITIVES:
             return
 
+        for param_name, type_hint in constructor.ktype[1].items():
+            # print(param_name, type_hint)
+            if type_hint in utils.PRIMITIVES:
+                # print("Not following primitive argument.")
+                continue
+
+            if inspect.isclass(type_hint):
+
+                # print("Adding dependency for class %s", param_name)
+                self.unresolved_classes.add((type_hint, recursion_level + 1))
+            else:
+                print("Found typing annotation %s, skipping" % param_name)
+                # (fk) fully support typing annotations.
+
         if not (ret_type in self.generators):
             self.generators[ret_type] = set()
         self.generators[ret_type].add(constructor)
 
-        # TODO: resolve dependencies
+    def resolve_dependencies(self):
+
+        while len(self.unresolved_classes) > 0:
+            class_to_solve, recursion_level = self.unresolved_classes.pop()
+            print(class_to_solve, )
+            self.add_class(class_to_solve, class_to_solve.__module__ +
+                           "." + class_to_solve.__name__, recursion_level, False)
 
 
 if __name__ == "__main__":
     sys.path.append(str(Path().parent.absolute()))
-    sys.path.append(str(Path().parent.absolute()) + "/examples")
+    sys.path.append(str(Path().parent.absolute() / "examples"))
+    output_folder_path = str(Path().parent.absolute() / "outputs")
     t = TestCluster()
     module_name = "queue_example"
-    t.generate_cluster("examples." + module_name)   
-    test_suite = testsuite.TestSuite( 2, 10, module_name, t)
-    test_suite.generate_random_test_suite()
-
-   
-
-
+    t.generate_cluster("examples." + module_name)
+    test_suite = testsuite.TestSuite(2, 10, module_name, t)
+    test_suite.generate_random_test_suite(output_folder_path)
