@@ -6,6 +6,8 @@ import parse
 import os
 from pathlib import Path
 from statement import *
+# from examples.queue_example import Queue
+
 
 
 class AbstractTestcase(ABC):
@@ -99,9 +101,24 @@ class Testcase(AbstractTestcase):
 
            
         
+def triangle(x: int, y: int, z: int) -> str:
+    if x == y == z:
+        return "Equilateral triangle"
+    elif x == y or y == z or x == z:
+        return "Isosceles triangle"
+    else:
+        return "Scalene triangle"
 
 
 
+# k = parse.infer_type(examples.e)
+# j = Queue(20)
 
-    
-
+# print(k)
+triangle.ftype = [[5,6,3], {"x":str, "y": int, "z":int}, [34,45,235]]
+triangle.function_name = "traingle"
+triangle.function = triangle
+a = FunctionTestcase(triangle, "array")
+b = a.generate_random_testcase()
+print(b)
+# a.write_in_file()
