@@ -1,6 +1,10 @@
-# import random
-# from pathlib import Path
-# import os
+import random
+from pathlib import Path
+import os
+
+
+def calculate_coverage():
+    pass
 #
 #
 # def write_in_file(chromosome):

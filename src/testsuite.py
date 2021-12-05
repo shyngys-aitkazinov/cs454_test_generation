@@ -1,5 +1,5 @@
 import testcase as t
-import os
+import os, sys
 from pathlib import Path
 # from testcase import Testcase
 
@@ -11,24 +11,25 @@ class TestSuite(object):
         self.module = module
         self.sut_info = sut_info
 
-    def generate_random_test_suite(self):
+    def generate_random_test_suite(self, output_folder_path='.'):
         for i in range(self.limit):
             testcase = t.Testcase(self.module, self.sut_info.objects_under_test, 4)
             testcase.generate_random_testcase()
             self.test_cluster.append(testcase)
 
         print(self.test_cluster)
-        self.write_test_file()
+        self.write_test_file(output_folder_path)
 
         return
 
-    def write_test_file(self):
+    def write_test_file(self, output_folder_path='.'):
         # writes the whole test suite into the file
         folder_name = "testsuite_" + self.module
-        folder_path = str(Path().absolute()) + '/examples'
+        folder_path = output_folder_path
+        # print(folder_path)
         path = os.path.join(folder_path, folder_name)
         count = 0
-
+        print(str(path))
         if not os.path.exists(path):
             os.mkdir(path)
 
