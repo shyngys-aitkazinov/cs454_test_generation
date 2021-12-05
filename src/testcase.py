@@ -166,14 +166,15 @@ class Testcase(AbstractTestcase):
         for i in range(len(self.statement_description) - 1, -1, -1):
             statement = self.statement_description[i]
             if type(statement).__name__ == statement_type:
-                if statement_type == "PrimitiveStatement" and statement.statement_type == value or statement_type == "ConstructorStatement" and statement.klass == value:
+                if statement_type == "PrimitiveStatement" and statement.statement_type == value or \
+                        statement_type == "ConstructorStatement" and statement.klass == value:
                     s = statement
         return s
 
     def find_coverage(self):
         file_name = "test_coverage.py"
-        folder_path = str(Path().absolute()) + \
-            "/coverage_files_" + self.module_name
+        folder_path = str(Path().absolute() /
+                          ("coverage_files_" + self.module_name))
 
         if not os.path.exists(folder_path):
             os.mkdir(folder_path)
@@ -182,13 +183,14 @@ class Testcase(AbstractTestcase):
         f = open(path, "w+")
         f.write("import coverage\n")
         f.write("cov = coverage.Coverage() \n")
+        f.write("cov.set_option('run:branch', True) \n")
         f.write("cov.start()\n")
 
         for line in self.statement_list:
             f.write(line + "\n")
 
         f.write("cov.stop()\n")
-        f.write("cov.save()\n")
+        f.write(f"cov.save()\n")
         f.write("cov.json_report()\n")
         f.close()
         exec(open(path).read())

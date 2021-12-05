@@ -13,7 +13,7 @@ class TestSuite(object):
         self.sut_info = sut_info
 
     def generate_random_test_suite(self, output_folder_path='.'):
-        for i in range(self.limit):
+        for i in range(self.limit_suite):
             testcase = t.Testcase(
                 self.module, self.sut_info.objects_under_test, 4)
             testcase.generate_random_testcase()
@@ -28,7 +28,6 @@ class TestSuite(object):
         # writes the whole test suite into the file
         folder_name = "testsuite_" + self.module
         folder_path = output_folder_path
-        # print(folder_path)
         path = os.path.join(folder_path, folder_name)
         count = 0
         print(str(path))
