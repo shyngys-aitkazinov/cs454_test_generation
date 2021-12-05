@@ -1,6 +1,6 @@
 from __future__ import annotations
-import datetime
-import enum
+# import datetime
+# import enum
 import importlib
 import logging
 import os
@@ -210,7 +210,7 @@ if __name__ == "__main__":
     sys.path.append(str(Path().parent.absolute()))
     sys.path.append(str(Path().parent.absolute()) + "/examples")
     t = TestCluster()
-    module_name = "example"
+    module_name = "queue_example"
     t.generate_cluster("examples." + module_name)   
     test_suite = testsuite.TestSuite( 2, module_name, t)
     test_suite.generate_random_test_suite()

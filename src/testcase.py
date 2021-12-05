@@ -53,25 +53,82 @@ class Testcase(AbstractTestcase):
         while (len(self.objects_under_test) > 0 and len(self.statement_list) < self.limit):
             test_obj = random.choice(list(self.objects_under_test))
             test_obj_type = type(test_obj).__name__
+        
 
             if test_obj_type == "Function":
-                arg_list = []
-                for _, value in test_obj.ftype[1].items():
-                    var_name = self.generate_variable_name()
-                    statement = PrimitiveStatement(value, var_name)
-                    statement.generate_statement()
+                self.make_function( test_obj )
 
-                    self.statement_description.append(statement)
-                    self.statement_list.append(statement.statement)
-                    arg_list.append(var_name)
+            elif test_obj_type == "Constructor":
+                self.make_constructor( test_obj )
 
-                func_var = self.generate_variable_name()
-                print(func_var)
-                func_statement = FunctionStatement(test_obj.ftype, test_obj.function_name, test_obj.function, arg_list,
-                                                   func_var)
-                func_statement.generate_statement()
-                self.statement_description.append(func_statement)
-                self.statement_list.append(func_statement.statement)
+            elif test_obj_type == "Method":
+                klass = test_obj.klass
+                constructor_obj = parse.Constructor( klass, klass.__name__, parse.infer_type(klass.__init__) )
+                obj_name = self.generate_variable_name()
+                self.make_constructor( constructor_obj, obj_name ) 
+                self.make_method( test_obj, obj_name )
+
+              
+             
+    def make_method( self, test_obj, obj_name ):
+        arg_list = []
+        for _, value in test_obj.mtype[1].items():
+            var_name = self.generate_variable_name()
+            if self.is_primitive( value ):
+                statement = PrimitiveStatement(value, var_name)
+            statement.generate_statement()
+
+            self.statement_description.append(statement)
+            self.statement_list.append(statement.statement)
+            arg_list.append(var_name)
+
+        method_var = self.generate_variable_name()
+        method_statement = MethodStatement( test_obj.mtype, test_obj.method_name , test_obj.method, obj_name , arg_list, method_var )
+        method_statement.generate_statement()
+        self.statement_description.append( method_statement)
+        self.statement_list.append(method_statement.statement)
+
+    def make_function( self, test_obj ):
+        arg_list = []
+        for _, value in test_obj.ftype[1].items():
+            var_name = self.generate_variable_name()
+            if self.is_primitive( value ):
+                statement = PrimitiveStatement(value, var_name)
+            statement.generate_statement()
+
+            self.statement_description.append(statement)
+            self.statement_list.append(statement.statement)
+            arg_list.append(var_name)
+
+        func_var = self.generate_variable_name()
+        func_statement = FunctionStatement(test_obj.ftype, test_obj.function_name, test_obj.function, arg_list,
+                                            func_var)
+        func_statement.generate_statement()
+        self.statement_description.append(func_statement)
+        self.statement_list.append(func_statement.statement)
+
+    def make_constructor(self, test_obj, variable_name = None):
+        arg_list = []
+        for _, value in test_obj.ktype[1].items():
+            var_name = self.generate_variable_name()
+            if self.is_primitive( value ):
+                print( "Is primitive" )
+                statement = PrimitiveStatement( value, var_name )
+                
+            statement.generate_statement()
+            self.statement_description.append(statement)
+            self.statement_list.append(statement.statement)
+            arg_list.append(var_name)
+
+        if variable_name is None:
+            object_var  = self.generate_variable_name()
+        else:
+            object_var = variable_name
+
+        constr_statement = ConstructorStatement( test_obj.ktype, test_obj.klass_name, test_obj.klass, arg_list, object_var) 
+        constr_statement.generate_statement()
+        self.statement_description.append(constr_statement)
+        self.statement_list.append( constr_statement.statement)    
 
     def generate_variable_name(self):
         variable = "v" + str(self.count)
@@ -86,6 +143,10 @@ class Testcase(AbstractTestcase):
         for i in self.statement_list:
             f.write(i + "\n")
         f.close()
+
+    def is_primitive( self, var_type ):
+        return var_type == int or var_type == bool or var_type == float or var_type == str
+
 
 
 

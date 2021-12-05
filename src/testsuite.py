@@ -1,7 +1,7 @@
 import testcase as t
 import os
 from pathlib import Path
-# from testcase import Testcase
+
 
 
 class TestSuite(object):

@@ -82,8 +82,42 @@ class FunctionStatement(AbstractStatement):
         statement += self.function_name + "( " + ', '.join(self.arg_list) + " )"
         self.statement = statement
 
-# class ClassStatement ( AbstractStatement ):
-#     def __init__ ( self, statement_type, class_name, ):
+
+class ConstructorStatement(AbstractStatement):
+    def __init__(self, statement_type, class_name, klass, arg_list, variable ):
+        self.statement = ""
+        self.statement_variable = variable
+        self.arg_list = arg_list
+        self.class_name = class_name
+        self.klass = klass
+        self.statement_type = statement_type
+    
+
+    def generate_statement(self):
+        statement = self.statement_variable + " = " 
+        statement += self.class_name + "(" + ', '.join(self.arg_list) +  " )"
+        self.statement = statement
+    
+
+
+class MethodStatement(AbstractStatement):
+    def __init__(self, statement_type, method_name, method, obj , arg_list, variable=None):
+        self.statement_type = statement_type
+        self.method = method
+        self.method_name = method_name
+        self.arg_list = arg_list
+        self.statement_variable = variable
+        self.obj = obj
+        self.statement = ""
+
+
+    def generate_statement(self):
+        statement = ""
+        if self.statement_variable is not None:
+            statement += (self.statement_variable + " = ")
+        statement += self.obj + '.' + self.method_name + "( " + ', '.join(self.arg_list) + " )"
+        self.statement = statement
+
 
 
 
