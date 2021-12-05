@@ -152,20 +152,3 @@ class GA(AbstractGA):
     pass
 
 
-def triangle(x: int, y: int, z: int) -> str:
-    if x == y == z:
-        return "Equilateral triangle"
-    elif x == y or y == z or x == z:
-        return "Isosceles triangle"
-    else:
-        return "Scalene triangle"
-
-
-triangle.ftype = [[5, 6, 3], {"x": int, "y": int, "z": int}, [34, 45, 235]]
-triangle.function_name = "traingle"
-triangle.function = triangle
-triangle.name = "traingle"
-a = GA(triangle)
-# b = a.generate_population(triangle)
-a.run_ga(1)
-# print(b)

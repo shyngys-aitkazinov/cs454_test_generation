@@ -6,6 +6,7 @@ import parse
 import os
 from pathlib import Path
 from statement import *
+import json
 
 
 class AbstractTestcase(ABC):
@@ -34,7 +35,6 @@ class AbstractTestcase(ABC):
 class Testcase(AbstractTestcase):
 
     def __init__(self, module_name: str, objects_under_test, limit):
-        # self.function_info = function_info
         self.module_name = module_name
         self.count = 0
         self.statement_list = []
@@ -53,106 +53,150 @@ class Testcase(AbstractTestcase):
         while (len(self.objects_under_test) > 0 and len(self.statement_list) < self.limit):
             test_obj = random.choice(list(self.objects_under_test))
             test_obj_type = type(test_obj).__name__
-        
 
             if test_obj_type == "Function":
-                self.make_function( test_obj )
+                self.make_function(test_obj)
 
             elif test_obj_type == "Constructor":
-                self.make_constructor( test_obj )
+                self.make_constructor(test_obj)
 
             elif test_obj_type == "Method":
                 klass = test_obj.klass
-                constructor_obj = parse.Constructor( klass, klass.__name__, parse.infer_type(klass.__init__) )
-                obj_name = self.generate_variable_name()
-                self.make_constructor( constructor_obj, obj_name ) 
-                self.make_method( test_obj, obj_name )
+                constr_statement = self.find_statement(klass)
 
-              
-             
-    def make_method( self, test_obj, obj_name ):
+                if constr_statement is not None:
+                    obj_name = constr_statement.statement_variable
+                else:
+                    constructor_obj = parse.Constructor(
+                        klass, klass.__name__, parse.infer_type(klass.__init__))
+                    obj_name = self.generate_variable_name()
+                    self.make_constructor(constructor_obj, obj_name)
+                self.make_method(test_obj, obj_name)
+        self.find_coverage()
+
+    def make_method(self, test_obj, obj_name):
         arg_list = []
         for _, value in test_obj.mtype[1].items():
-            var_name = self.generate_variable_name()
-            if self.is_primitive( value ):
-                statement = PrimitiveStatement(value, var_name)
-            statement.generate_statement()
+            statement = self.find_statement(value)
+            if statement is not None:
+                var_name = statement.statement_variable
 
-            self.statement_description.append(statement)
-            self.statement_list.append(statement.statement)
+            elif self.is_primitive(value):
+                var_name = self.generate_variable_name()
+                statement = PrimitiveStatement(value, var_name)
+                statement.generate_statement()
+
+                self.statement_description.append(statement)
+                self.statement_list.append(statement.statement)
+
             arg_list.append(var_name)
 
         method_var = self.generate_variable_name()
-        method_statement = MethodStatement( test_obj.mtype, test_obj.method_name , test_obj.method, obj_name , arg_list, method_var )
+        method_statement = MethodStatement(
+            test_obj.mtype, test_obj.method_name, test_obj.method, obj_name, arg_list, method_var)
         method_statement.generate_statement()
-        self.statement_description.append( method_statement)
+        self.statement_description.append(method_statement)
         self.statement_list.append(method_statement.statement)
 
-    def make_function( self, test_obj ):
+    def make_function(self, test_obj):
         arg_list = []
         for _, value in test_obj.ftype[1].items():
-            var_name = self.generate_variable_name()
-            if self.is_primitive( value ):
-                statement = PrimitiveStatement(value, var_name)
-            statement.generate_statement()
+            statement = self.find_statement(value)
+            if statement is not None:
+                var_name = statement.statement_variable
 
-            self.statement_description.append(statement)
-            self.statement_list.append(statement.statement)
+            elif self.is_primitive(value):
+                var_name = self.generate_variable_name()
+                statement = PrimitiveStatement(value, var_name)
+                statement.generate_statement()
+                self.statement_description.append(statement)
+                self.statement_list.append(statement.statement)
+
             arg_list.append(var_name)
 
         func_var = self.generate_variable_name()
         func_statement = FunctionStatement(test_obj.ftype, test_obj.function_name, test_obj.function, arg_list,
-                                            func_var)
+                                           func_var)
         func_statement.generate_statement()
         self.statement_description.append(func_statement)
         self.statement_list.append(func_statement.statement)
 
-    def make_constructor(self, test_obj, variable_name = None):
+    def make_constructor(self, test_obj, variable_name=None):
         arg_list = []
         for _, value in test_obj.ktype[1].items():
-            var_name = self.generate_variable_name()
-            if self.is_primitive( value ):
-                print( "Is primitive" )
-                statement = PrimitiveStatement( value, var_name )
-                
-            statement.generate_statement()
-            self.statement_description.append(statement)
-            self.statement_list.append(statement.statement)
+            statement = self.find_statement(value)
+            if statement is not None:
+                var_name = statement.statement_variable
+
+            elif self.is_primitive(value):
+                var_name = self.generate_variable_name()
+                statement = PrimitiveStatement(value, var_name)
+                statement.generate_statement()
+                self.statement_description.append(statement)
+                self.statement_list.append(statement.statement)
+
             arg_list.append(var_name)
 
         if variable_name is None:
-            object_var  = self.generate_variable_name()
+            object_var = self.generate_variable_name()
         else:
             object_var = variable_name
 
-        constr_statement = ConstructorStatement( test_obj.ktype, test_obj.klass_name, test_obj.klass, arg_list, object_var) 
+        constr_statement = ConstructorStatement(
+            test_obj.ktype, test_obj.klass_name, test_obj.klass, arg_list, object_var)
+
         constr_statement.generate_statement()
         self.statement_description.append(constr_statement)
-        self.statement_list.append( constr_statement.statement)    
+        self.statement_list.append(constr_statement.statement)
 
     def generate_variable_name(self):
         variable = "v" + str(self.count)
         self.count += 1
         return variable
 
-    def write_in_file(self):
-        file_name = "testcase.py"
-        folder_path = str(Path().absolute()) + '/examples'
+    def find_statement(self, value):
+        # checks whether given statement type exists in current statement descriptions and returns items it
+        statement_type = ''
+        if self.is_primitive(value):
+            statement_type = "PrimitiveStatement"
+        else:
+            statement_type = "ConstructorStatement"
+
+        s = None
+        for i in range(len(self.statement_description) - 1, -1, -1):
+            statement = self.statement_description[i]
+            if type(statement).__name__ == statement_type:
+                if statement_type == "PrimitiveStatement" and statement.statement_type == value or statement_type == "ConstructorStatement" and statement.klass == value:
+                    s = statement
+        return s
+
+    def find_coverage(self):
+        file_name = "test_coverage.py"
+        folder_path = str(Path().absolute()) + \
+            "/coverage_files_" + self.module_name
+
+        if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
+
         path = os.path.join(folder_path, file_name)
-        f = open(path, "w")
-        for i in self.statement_list:
-            f.write(i + "\n")
+        f = open(path, "w+")
+        f.write("import coverage\n")
+        f.write("cov = coverage.Coverage() \n")
+        f.write("cov.start()\n")
+
+        for line in self.statement_list:
+            f.write(line + "\n")
+
+        f.write("cov.stop()\n")
+        f.write("cov.save()\n")
+        f.write("cov.json_report()\n")
         f.close()
+        exec(open(path).read())
 
-    def is_primitive( self, var_type ):
+        with open('coverage.json', 'r') as report:
+            data = json.load(report)
+            print("Percent covered",
+                  data['files']['examples/' + self.module_name + '.py']['summary']['percent_covered'])
+
+    def is_primitive(self, var_type):
         return var_type == int or var_type == bool or var_type == float or var_type == str
-
-
-
-
-
-
-
-
-
-

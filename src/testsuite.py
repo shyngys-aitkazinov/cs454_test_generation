@@ -5,19 +5,18 @@ from pathlib import Path
 
 
 class TestSuite(object):
-    def __init__(self, limit, module, sut_info):
+    def __init__(self, limit_suite, limit_test, module, sut_info):
         self.test_cluster = []
-        self.limit = limit
+        self.limit_suite = limit_suite
+        self.limit_test = limit_test
         self.module = module
         self.sut_info = sut_info
 
     def generate_random_test_suite(self):
-        for i in range(self.limit):
-            testcase = t.Testcase(self.module, self.sut_info.objects_under_test, 4)
+        for i in range(self.limit_suite):
+            testcase = t.Testcase(self.module, self.sut_info.objects_under_test, self.limit_test)
             testcase.generate_random_testcase()
             self.test_cluster.append(testcase)
-
-        print(self.test_cluster)
         self.write_test_file()
 
         return
