@@ -15,7 +15,7 @@ class TestSuite(object):
     def generate_random_test_suite(self, output_folder_path='.'):
         for i in range(self.limit_suite):
             testcase = t.Testcase(
-                self.module, self.sut_info.objects_under_test, 4)
+                self.module, self.sut_info, self.limit_test)
             testcase.generate_random_testcase()
             self.test_cluster.append(testcase)
 

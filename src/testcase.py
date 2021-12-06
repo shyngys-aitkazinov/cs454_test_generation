@@ -15,14 +15,6 @@ class AbstractTestcase(ABC):
         self.statement_list = []
 
     @classmethod
-    def __subclasshook__(cls, subclass):
-        return (hasattr(subclass, 'get_type') and
-                callable(subclass.get_type) and
-                hasattr(subclass, 'get_value') and
-                callable(subclass.get_value) or
-                NotImplemented)
-
-    @classmethod
     @abstractmethod
     def generate_random_testcase(cls, *args):
         """
@@ -34,12 +26,14 @@ class AbstractTestcase(ABC):
 
 class Testcase(AbstractTestcase):
 
-    def __init__(self, module_name: str, objects_under_test, limit):
+    def __init__(self, module_name: str, test_cluster: parse.TestCluster, limit):
         self.module_name = module_name
         self.count = 0
         self.statement_list = []
         self.statement_description = []
-        self.objects_under_test = objects_under_test
+        self.modifiers = test_cluster.modifiers
+        self.generators = test_cluster.generators
+        self.objects_under_test = test_cluster.objects_under_test
         self.limit = limit
 
     def generate_random_testcase(self):
@@ -49,8 +43,10 @@ class Testcase(AbstractTestcase):
         self.statement_description.append(import_statement)
         self.statement_list.append(import_statement.statement)
 
+        random_length = random.randint(1, self.limit + 1)
+
         # Retrieve objects_under_test randomly and make corresponding statements
-        while (len(self.objects_under_test) > 0 and len(self.statement_list) < self.limit):
+        while (len(self.objects_under_test) > 0 and len(self.statement_list) < random_length):
             test_obj = random.choice(list(self.objects_under_test))
             test_obj_type = type(test_obj).__name__
 
@@ -162,13 +158,14 @@ class Testcase(AbstractTestcase):
         else:
             statement_type = "ConstructorStatement"
 
-        s = None
+        statement_list = [None]
         for i in range(len(self.statement_description) - 1, -1, -1):
             statement = self.statement_description[i]
             if type(statement).__name__ == statement_type:
                 if statement_type == "PrimitiveStatement" and statement.statement_type == value or \
                         statement_type == "ConstructorStatement" and statement.klass == value:
-                    s = statement
+                    statement_list.append(statement)
+        s = random.choice(statement_list)
         return s
 
     def find_coverage(self):
@@ -180,25 +177,50 @@ class Testcase(AbstractTestcase):
             os.mkdir(folder_path)
 
         path = os.path.join(folder_path, file_name)
+
+        if os.path.isfile(path):
+            os.remove(path)
+
         f = open(path, "w+")
         f.write("import coverage\n")
         f.write("cov = coverage.Coverage() \n")
         f.write("cov.set_option('run:branch', True) \n")
         f.write("cov.start()\n")
+        f.write('try:\n')
 
         for line in self.statement_list:
-            f.write(line + "\n")
+            f.write("\t"+line + "\n")
+
+        f.write('except:\n')
+        f.write('\tpass\n')
+
 
         f.write("cov.stop()\n")
         f.write(f"cov.save()\n")
         f.write("cov.json_report()\n")
         f.close()
-        exec(open(path).read())
+        run_time_error = False
+        try:
+            exec(open(path).read())
+        except Exception as e:
+            run_time_error = True
+            print("Testcase run failed")
+            print(e)
 
+        print(path)
+        os.remove(path)
+
+        data = None
         with open('coverage.json', 'r') as report:
             data = json.load(report)
-            print("Percent covered",
-                  data['files']['examples/' + self.module_name + '.py']['summary']['percent_covered'])
+
+        print("Percent covered",
+              data['files'][os.path.join('examples', (self.module_name + '.py'))]['summary']['percent_covered'])
+
+        os.remove('coverage.json')
+
+        return data['files'][os.path.join('examples', (self.module_name + '.py'))]['summary']
+
 
     def is_primitive(self, var_type):
         return var_type == int or var_type == bool or var_type == float or var_type == str
