@@ -283,7 +283,7 @@ if __name__ == "__main__":
     sys.path.append(str(Path().parent.absolute() / "examples"))
     output_folder_path = str(Path().parent.absolute() / "outputs")
     t = TestCluster()
-    module_name = "queue_example"
+    module_name = "obj_example"
     t.generate_cluster("examples." + module_name)
-    test_suite = testsuite.TestSuite(2, 10, module_name, t)
+    test_suite = testsuite.TestSuite(4, 50, module_name, t)
     test_suite.generate_random_test_suite(output_folder_path)

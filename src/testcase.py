@@ -33,6 +33,7 @@ class Testcase(AbstractTestcase):
         self.statement_description = []
         self.modifiers = test_cluster.modifiers
         self.generators = test_cluster.generators
+        print(self.generators)
         self.objects_under_test = test_cluster.objects_under_test
         self.limit = limit
 
@@ -63,8 +64,7 @@ class Testcase(AbstractTestcase):
                 if constr_statement is not None:
                     obj_name = constr_statement.statement_variable
                 else:
-                    constructor_obj = parse.Constructor(
-                        klass, klass.__name__, parse.infer_type(klass.__init__))
+                    constructor_obj = list(self.generators[klass])[0]
                     obj_name = self.generate_variable_name()
                     self.make_constructor(constructor_obj, obj_name)
                 self.make_method(test_obj, obj_name)
@@ -72,6 +72,7 @@ class Testcase(AbstractTestcase):
 
     def make_method(self, test_obj, obj_name):
         arg_list = []
+        print("Mtype is ", test_obj.mtype[1])
         for _, value in test_obj.mtype[1].items():
             statement = self.find_statement(value)
             if statement is not None:
@@ -84,7 +85,10 @@ class Testcase(AbstractTestcase):
 
                 self.statement_description.append(statement)
                 self.statement_list.append(statement.statement)
-
+            else:
+                var_name = self.generate_variable_name()
+                obj = list(self.generators[value])[0]
+                self.make_constructor(obj, var_name)
             arg_list.append(var_name)
 
         method_var = self.generate_variable_name()
@@ -108,6 +112,11 @@ class Testcase(AbstractTestcase):
                 self.statement_description.append(statement)
                 self.statement_list.append(statement.statement)
 
+            else:
+                var_name = self.generate_variable_name()
+                obj = list(self.generators[value])[0]
+                self.make_constructor(obj, var_name)
+
             arg_list.append(var_name)
 
         func_var = self.generate_variable_name()
@@ -130,6 +139,12 @@ class Testcase(AbstractTestcase):
                 statement.generate_statement()
                 self.statement_description.append(statement)
                 self.statement_list.append(statement.statement)
+            else:
+                var_name = self.generate_variable_name()
+                constr = list(self.generators[value])[0]
+                print("Constr: ", constr)
+                self.make_constructor(constr, var_name)
+                print("Statement: ", self.statement_list[-1])
 
             arg_list.append(var_name)
 
@@ -200,7 +215,6 @@ class Testcase(AbstractTestcase):
         f.write("cov.json_report()\n")
         f.close()
 
-
         run_time_error = False
         try:
             exec(open(path).read())
@@ -217,8 +231,6 @@ class Testcase(AbstractTestcase):
             print("Testcase run failed")
             os.remove('crashed.txt')
 
-
-
         data = None
         with open('coverage.json', 'r') as report:
             data = json.load(report)
@@ -229,7 +241,6 @@ class Testcase(AbstractTestcase):
         os.remove('coverage.json')
 
         return data['files'][os.path.join('examples', (self.module_name + '.py'))]['summary'], run_time_error
-
 
     def is_primitive(self, var_type):
         return var_type == int or var_type == bool or var_type == float or var_type == str
