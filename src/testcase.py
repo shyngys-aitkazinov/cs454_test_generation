@@ -26,7 +26,7 @@ class AbstractTestcase(ABC):
 
 class Testcase(AbstractTestcase):
 
-    def __init__(self, module_name: str, test_cluster: parse.TestCluster, limit):
+    def __init__(self, module_name: str, test_cluster: parse.TestCluster, limit, timeout_time=5):
         self.module_name = module_name
         self.count = 0
         self.statement_list = []
@@ -36,6 +36,7 @@ class Testcase(AbstractTestcase):
         print(self.generators)
         self.objects_under_test = test_cluster.objects_under_test
         self.limit = limit
+        self.timeout_time = timeout_time
 
     def generate_random_testcase(self):
         # Add import statement
@@ -68,11 +69,13 @@ class Testcase(AbstractTestcase):
                     obj_name = self.generate_variable_name()
                     self.make_constructor(constructor_obj, obj_name)
                 self.make_method(test_obj, obj_name)
+
+        print("v coverage")
         self.find_coverage()
 
     def make_method(self, test_obj, obj_name):
         arg_list = []
-        print("Mtype is ", test_obj.mtype[1])
+        # print("Mtype is ", test_obj.mtype[1])
         for _, value in test_obj.mtype[1].items():
             statement = self.find_statement(value)
             if statement is not None:
@@ -198,6 +201,15 @@ class Testcase(AbstractTestcase):
 
         f = open(path, "w+")
         f.write("import coverage\n")
+
+        f.write("import signal\n")
+        f.write("def handler(signum, frame):\n")
+        f.write("\tprint('Timeout of the test case')\n")
+        f.write("\traise Exception('end of time')\n")
+
+        f.write("signal.signal(signal.SIGALRM, handler)\n")
+        f.write(f"signal.alarm({self.timeout_time})\n")
+
         f.write("cov = coverage.Coverage() \n")
         f.write("cov.set_option('run:branch', True) \n")
         f.write("cov.start()\n")
@@ -215,6 +227,7 @@ class Testcase(AbstractTestcase):
         f.write("cov.json_report()\n")
         f.close()
 
+        print("in exec exec")
         run_time_error = False
         try:
             exec(open(path).read())

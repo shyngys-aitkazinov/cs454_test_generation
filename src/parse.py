@@ -285,5 +285,5 @@ if __name__ == "__main__":
     t = TestCluster()
     module_name = "obj_example"
     t.generate_cluster("examples." + module_name)
-    test_suite = testsuite.TestSuite(4, 50, module_name, t)
+    test_suite = testsuite.TestSuite(4, 10, module_name, t)
     test_suite.generate_random_test_suite(output_folder_path)
