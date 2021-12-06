@@ -192,13 +192,15 @@ class Testcase(AbstractTestcase):
             f.write("\t"+line + "\n")
 
         f.write('except:\n')
-        f.write('\tpass\n')
-
+        f.write('\twith open("crashed.txt", "w+") as cr_file:\n')
+        f.write('\t\tcr_file.write("yes")\n')
 
         f.write("cov.stop()\n")
         f.write(f"cov.save()\n")
         f.write("cov.json_report()\n")
         f.close()
+
+
         run_time_error = False
         try:
             exec(open(path).read())
@@ -210,6 +212,13 @@ class Testcase(AbstractTestcase):
         print(path)
         os.remove(path)
 
+        if os.path.isfile('crashed.txt'):
+            run_time_error = True
+            print("Testcase run failed")
+            os.remove('crashed.txt')
+
+
+
         data = None
         with open('coverage.json', 'r') as report:
             data = json.load(report)
@@ -219,7 +228,7 @@ class Testcase(AbstractTestcase):
 
         os.remove('coverage.json')
 
-        return data['files'][os.path.join('examples', (self.module_name + '.py'))]['summary']
+        return data['files'][os.path.join('examples', (self.module_name + '.py'))]['summary'], run_time_error
 
 
     def is_primitive(self, var_type):
