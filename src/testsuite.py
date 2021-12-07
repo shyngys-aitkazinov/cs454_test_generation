@@ -11,6 +11,8 @@ class TestSuite(object):
         self.limit_test = limit_test
         self.module = module
         self.sut_info = sut_info
+        self.suite_coverage = []
+        self.number_of_lines = len(self.suite_coverage) # number of lines covered by the testsuite 
 
     def generate_random_test_suite(self, output_folder_path='.'):
         for i in range(self.limit_suite):
@@ -19,9 +21,9 @@ class TestSuite(object):
             testcase.generate_random_testcase()
             self.test_cluster.append(testcase)
 
-        print(self.test_cluster)
+        # print(self.test_cluster)
         self.write_test_file(output_folder_path)
-
+        # self.find_suite_coverage()
         return
 
     def write_test_file(self, output_folder_path='.'):
@@ -30,7 +32,7 @@ class TestSuite(object):
         folder_path = output_folder_path
         path = os.path.join(folder_path, folder_name)
         count = 0
-        print(str(path))
+        # print(str(path))
         if not os.path.exists(path):
             os.mkdir(path)
 
@@ -38,8 +40,16 @@ class TestSuite(object):
             test_name = "test_" + str(count) + ".py"
             p = os.path.join(path, test_name)
             f = open(p, "w+")
-            print(testcase.statement_list)
+            # print(testcase.statement_list)
             for statement in testcase.statement_list:
                 f.write(statement + "\n")
             f.close()
             count += 1
+    def find_suite_coverage(self):
+        """
+        returns line covered by the testsuit, union of each  test case line coverage:
+        """
+        for test in self.test_cluster:
+            self.suite_coverage = list(set(self.suite_coverage) | set(test.executed_lines))
+        self.suite_coverage.sort()
+        

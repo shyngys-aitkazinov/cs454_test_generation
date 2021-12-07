@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Optional
 import typing
 import inspect
 import utils
+import ga
 import testsuite
 
 
@@ -275,7 +276,7 @@ class TestCluster:
 
         while len(self.unresolved_classes) > 0:
             class_to_solve, recursion_level = self.unresolved_classes.pop()
-            print(class_to_solve, )
+            # print(class_to_solve, )
             self.add_class(class_to_solve, class_to_solve.__module__ +
                            "." + class_to_solve.__name__, recursion_level, False)
 
@@ -287,5 +288,19 @@ if __name__ == "__main__":
     t = TestCluster()
     module_name = "obj_example"
     t.generate_cluster("examples." + module_name)
-    test_suite = testsuite.TestSuite(4, 10, module_name, t)
-    test_suite.generate_random_test_suite(output_folder_path)
+    # test_suite = testsuite.TestSuite(4, 10, module_name, t)
+    # test_suite.generate_random_test_suite(output_folder_path)
+    parameter = {
+                    "pop_size": 10,
+                    "mutation_rate": 0.7,
+                    "crossover_rate": 0.4,
+                    "number_of_testsuits": 10,
+                    "module_name": module_name,
+                    "limit_test": 10,
+                    "limit_suite": 4,
+                    "sut_info": t,
+                    "path": output_folder_path
+                } 
+
+    Ga = ga.GA(parameter)
+    Ga.run_ga(4)
