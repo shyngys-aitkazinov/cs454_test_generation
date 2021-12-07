@@ -32,16 +32,15 @@ if __name__ == "__main__":
     parser.add_option("-s", "--selection",
                       action="store", type="string", dest="selection_type", default="tournament",
                       help="selection type: Tournament, Roulette Wheel")
-    parser.add_option("-l", "--local_search", action="store_true", dest="local_search",
-                      help="to apply local search, add this flag", default=False)
-    parser.add_option("-n", "--no_elitism", action="store_false", dest="elitism",
-                      help="turn off elitism", default=True)
     parser.add_option("-m", "--mutation_rate", action="store", type="float", dest="mutation_rate",
-                      help="set mutation rate", default=0.05)
-    parser.add_option("-r", "--read_population", action="store", type="string", dest="load_population",
-                      help="start with predefined population: csv file", default=None)
+                      help="set mutation rate", default=0.7)
+    parser.add_option("-t", "--target_module", action="store", type="string", dest="module_name",
+                      help="set target module to test, e.g ", default="arithmetics.complex")
+    # parser.add_option("-c", "--crossover_rate", action="store", type="float", dest="load_population",
+    #                   help="set crossover rate", default=0.5)
 
-    (options, args) = parser.parse_args(sys.argv[2:])
+
+    (options, args) = parser.parse_args(sys.argv[1:])
 
     # append examples folder
     sys.path.append(str(Path().parent.absolute()))
@@ -50,24 +49,21 @@ if __name__ == "__main__":
     # output path
     output_folder_path = str(Path().parent.absolute() / "outputs")
 
-
     cluster = TestCluster()
-    module_name = sys.argv
 
-    module_name = "obj_example"
-    t.generate_cluster("examples." + module_name)
+    module_name = options.module_name
+    cluster.generate_cluster("examples." + module_name)
 
     ga_config= {
-                    "pop_size": 10,
-                    "mutation_rate": 0.7,
-                    "crossover_rate": 0.4,
-                    "number_of_testsuits": 10,
+                    "pop_size": options.population_size,
+                    "mutation_rate": options.mutation_rate,
+                    "crossover_rate": options.crossover_rate,
                     "module_name": module_name,
-                    "limit_test": 10,
-                    "limit_suite": 4,
-                    "sut_info": t,
-                    "path": output_folder_path
+                    "limit_test_lines": 10,
+                    "limit_suite_testcases": 4,
+                    "sut_info": cluster,
+                    "output_folder_path": output_folder_path
                 }
 
     Ga = ga.GA(ga_config)
-    Ga.run_ga(4)
+    Ga.run_ga(options.epochs)

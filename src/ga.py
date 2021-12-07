@@ -85,27 +85,24 @@ class AbstractGA(ABC):
 
 class GA():
     def __init__(self, configuration):
-        # self.config = configuration
+
         self.sut_info = configuration["sut_info"]
         self.population_size = configuration["pop_size"]
-        self.number_of_testsuit = configuration["number_of_testsuits"]
         self.mutation_rate = configuration["mutation_rate"]
         self.crossover_rate = configuration["crossover_rate"]
         self.module_name = configuration["module_name"]
-        self.limit_suite = configuration["limit_suite"]
-        self.limit_test = configuration["limit_test"]
-        self.path = configuration["path"]
-        self.population = []
+
+        self.limit_suite = configuration["limit_suite_testcases"]
+        self.limit_test = configuration["limit_test_lines"]
+        self.output_folder_path = configuration["output_folder_path"]
         self.selection_type = configuration["selection"]
+        self.population = []
 
     def initialize_population(self):
         for i in range(self.population_size):
-        # for i in range(4):
-            # print(i)
-            test_suite = testsuite.TestSuite(self.limit_suite, self.limit_test, self.module_name, self.sut_info)
-            test_suite.generate_random_test_suite(self.path)
+            test_suite = testsuite.TestSuite(self.limit_suite, self.limit_test, self.module_name, self.sut_info, i)
+            test_suite.generate_random_test_suite(self.output_folder_path)
             self.population.append(test_suite)
-        
         return
 
     def selection(self):
@@ -132,7 +129,7 @@ class GA():
                 if (1/testsuite.number_of_lines) < selector:
                     P1 = testsuite
                     self.population.remove(testsuite)
-            for testsuite in  self.population:
+            for testsuite in self.population:
                 if (1/testsuite.number_of_lines) < selector:
                     P2 = testsuite
             self.population.append(P1)
@@ -144,16 +141,16 @@ class GA():
 
 
 
-    def crossover(parent1, parent2):
+    def crossover(self, parent1, parent2):
         '''
         Needs to be updated
         '''
         alpha = random.random()
-        O1 = parent1[:int(alpha(len(parent1)))] + parent2[int((1 - alpha)(len(parent2))):]
-        O2 = parent2[:int(alpha(len(parent2)))] + parent1[int((1 - alpha)(len(parent1))):]
+        O1 = parent1[:round(alpha * (len(parent1)))] + parent2[round((1 - alpha) * (len(parent2))):]
+        O2 = parent2[:round(alpha * (len(parent2)))] + parent1[round((1 - alpha) * (len(parent1))):]
         return O1, O2
 
-    def mutate(offsprining):
+    def mutate(self, offsprining):
         if random.random() > (1 / len(offsprining)):
             # si = offsprining.pop(int(len(offsprining) * random.random()))
             '''
@@ -161,14 +158,8 @@ class GA():
             # if possible find a way to replace si with the same type
             '''
         if random.random() > (1 / len(offsprining)):
-            ...
+            pass
         return offsprining
-
-    def crossover_individuals(self):
-        return super().crossover_individuals()
-
-    def mutate_individual(self):
-        return super().mutate_individual()
 
     # def fitness_evaluation(self):
     #     return int(20 * random.random())

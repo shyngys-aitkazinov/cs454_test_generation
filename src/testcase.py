@@ -2,7 +2,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import random
 import string
-from typing_extensions import runtime
 import parse
 import os
 from pathlib import Path
@@ -74,13 +73,17 @@ class Testcase(AbstractTestcase):
                 self.make_method(test_obj, obj_name)
 
         # print("v coverage")
+
+    def find_fitness(self):
+
         fitness, runtime_error =  self.find_coverage()
         print(fitness)
-        if runtime_error: 
+        if runtime_error:
             self.fitness = 0
-        else: 
+        else:
             self.fitness = fitness['summary']['percent_covered']
             self.executed_lines = fitness['executed_lines']
+        return self.fitness, self.executed_lines
 
     def make_method(self, test_obj, obj_name):
         arg_list = []
@@ -262,7 +265,7 @@ class Testcase(AbstractTestcase):
         # print("Percent covered",
         #       data['files'][os.path.join('examples', (self.module_name + '.py'))]['summary']['percent_covered'])
 
-        # os.remove('coverage.json')
+        os.remove('coverage.json')
 
         return data['files'][os.path.join('examples', (self.module_name + '.py'))], run_time_error
 
