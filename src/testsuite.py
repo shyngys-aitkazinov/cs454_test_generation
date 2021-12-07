@@ -28,6 +28,7 @@ class TestSuite(object):
 
         random_num_testcases = random.randint(1, self.limit_suite + 1)
         for i in range(random_num_testcases):
+            # (self, module: Tuple[str, str], test_cluster: parse.TestCluster, limit, timeout_time=5):
             testcase = t.Testcase(
                 (self.module, self.module_path), self.sut_info, self.limit_test)
             testcase.generate_random_testcase()
@@ -62,12 +63,20 @@ class TestSuite(object):
         """
         returns line covered by the testsuit, union of each  test case line coverage:
         """
+        total_number = 0
+        self.suite_coverage = []
+
         for test in self.test_cluster:
-            fitness, executed_lines = test.find_fitness(output_folder_path)
+            fitness, executed_lines, total_number_of_lines = test.find_fitness(
+                output_folder_path)
+            total_number = max(total_number_of_lines, total_number)
             if fitness > 0:
                 self.suite_coverage = list(
                     set(self.suite_coverage) | set(executed_lines))
-
         self.suite_coverage.sort()
 
+        if total_number > 0:
+            print("Suite coverage:", len(self.suite_coverage) / total_number)
+            return len(self.suite_coverage) / total_number
+        print("Suite coverage:", len(self.suite_coverage))
         return len(self.suite_coverage)
