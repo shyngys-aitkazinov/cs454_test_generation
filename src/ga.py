@@ -83,7 +83,7 @@ class AbstractGA(ABC):
         """
 
 
-class GA(AbstractGA):
+class GA():
     def __init__(self, configuration):
         # self.config = configuration
         self.sut_info = configuration["sut_info"]
@@ -96,19 +96,21 @@ class GA(AbstractGA):
         self.limit_test = configuration["limit_test"]
         self.path = configuration["path"]
         self.population = []
+        self.selection_type = configuration["selection"]
 
     def initialize_population(self):
-        # for i in range(self.population_size):
-        for i in range(4):
-            print(i)
+        for i in range(self.population_size):
+        # for i in range(4):
+            # print(i)
             test_suite = testsuite.TestSuite(self.limit_suite, self.limit_test, self.module_name, self.sut_info)
             test_suite.generate_random_test_suite(self.path)
             self.population.append(test_suite)
-
+        
         return
 
     def selection(self):
-        if random.random() > 0.5:
+        # if random.random() > 0.5:
+        if self.selection_type == "Tournamnet":
             '''
             Tournament selection:
             '''
@@ -120,8 +122,8 @@ class GA(AbstractGA):
             if P1.number_of_lines >= P2.number_of_lines:
                 return P1
             else:
-                return P2
-        else:
+                return P2 
+        elif self.selection_type == "Roulette_wheel":
             '''
             Baised Roulette Wheel
             '''
@@ -181,8 +183,8 @@ class GA(AbstractGA):
         for i in range(epochs):
             alpha = random.random()
             gamma = random.random()
-
-            while len(self.population) <= 2(self.population_size):
+            
+            while len(self.population) <= 2*(self.population_size):
                 P1 = self.selection()
                 P2 = self.selection()
                 while P1==P2:

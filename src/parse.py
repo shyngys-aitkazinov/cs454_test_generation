@@ -15,8 +15,6 @@ import utils
 import ga
 import testsuite
 
-
-
 MAX_RECURSION_LEVEL = 20
 
 
