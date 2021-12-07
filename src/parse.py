@@ -279,27 +279,3 @@ class TestCluster:
                            "." + class_to_solve.__name__, recursion_level, False)
 
 
-if __name__ == "__main__":
-    sys.path.append(str(Path().parent.absolute()))
-    sys.path.append(str(Path().parent.absolute() / "examples"))
-    output_folder_path = str(Path().parent.absolute() / "outputs")
-    t = TestCluster()
-    module_name = "obj_example"
-    t.generate_cluster("examples." + module_name)
-    # test_suite = testsuite.TestSuite(4, 10, module_name, t)
-    # test_suite.generate_random_test_suite(output_folder_path)
-    parameter = {
-                    "pop_size": 10,
-                    "mutation_rate": 0.7,
-                    "crossover_rate": 0.4,
-                    "number_of_testsuits": 10,
-                    "module_name": module_name,
-                    "limit_test": 10,
-                    "limit_suite": 4,
-                    "sut_info": t,
-                    "path": output_folder_path,
-                    "selection": 'Tournament'
-                } 
-
-    Ga = ga.GA(parameter)
-    Ga.run_ga(4)

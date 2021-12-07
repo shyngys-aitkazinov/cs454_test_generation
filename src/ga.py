@@ -8,6 +8,7 @@ import random
 from parse import *
 from inspect import *
 from testcase import *
+import testsuite
 
 
 class AbstractGA(ABC):
@@ -85,27 +86,25 @@ class AbstractGA(ABC):
 
 class GA():
     def __init__(self, configuration):
-        # self.config = configuration
+
         self.sut_info = configuration["sut_info"]
         self.population_size = configuration["pop_size"]
-        self.number_of_testsuit = configuration["number_of_testsuits"]
         self.mutation_rate = configuration["mutation_rate"]
         self.crossover_rate = configuration["crossover_rate"]
-        self.module_name = configuration["module_name"]
-        self.limit_suite = configuration["limit_suite"]
-        self.limit_test = configuration["limit_test"]
-        self.path = configuration["path"]
-        self.population = []
+        self.module_name = configuration["module_name"][0]
+        self.module_name_path = configuration["module_name"][1]
+        self.limit_suite = configuration["limit_suite_testcases"]
+        self.limit_test = configuration["limit_test_lines"]
+        self.output_folder_path = configuration["output_folder_path"]
         self.selection_type = configuration["selection"]
+        self.population = []
 
     def initialize_population(self):
         for i in range(self.population_size):
-        # for i in range(4):
-            # print(i)
-            test_suite = testsuite.TestSuite(self.limit_suite, self.limit_test, self.module_name, self.sut_info)
-            test_suite.generate_random_test_suite(self.path)
+            test_suite = testsuite.TestSuite(self.limit_suite, self.limit_test,
+                                             (self.module_name, self.module_name_path), self.sut_info, i)
+            test_suite.generate_random_test_suite(self.output_folder_path)
             self.population.append(test_suite)
-        
         return
 
     def selection(self):
@@ -114,25 +113,26 @@ class GA():
             '''
             Tournament selection:
             '''
-            P1 = self.population[int(random.random()* len(self.population))]
-            P2 = self.population[int(random.random()* len(self.population))]
+            P1 = self.population[int(random.random() * len(self.population))]
+            P2 = self.population[int(random.random() * len(self.population))]
 
             while P1 == P2:
-                P2 = self.population[int(random.random()* len(self.population))]
+                P2 = self.population[int(
+                    random.random() * len(self.population))]
             if P1.number_of_lines >= P2.number_of_lines:
                 return P1
             else:
-                return P2 
+                return P2
         elif self.selection_type == "Roulette_wheel":
             '''
             Baised Roulette Wheel
             '''
             selector = random.random()
-            for testsuite in  self.population:
+            for testsuite in self.population:
                 if (1/testsuite.number_of_lines) < selector:
                     P1 = testsuite
                     self.population.remove(testsuite)
-            for testsuite in  self.population:
+            for testsuite in self.population:
                 if (1/testsuite.number_of_lines) < selector:
                     P2 = testsuite
             self.population.append(P1)
@@ -140,19 +140,24 @@ class GA():
             if P1.number_of_lines >= P2.number_of_lines:
                 return P1
             else:
-                return P2 
+                return P2
 
+<<<<<<< HEAD
 
-
+=======
+>>>>>>> f9f156e13f071c6087299ec05353e606e1d72877
     def crossover(self, parent1, parent2):
         '''
         Needs to be updated
         '''
         alpha = random.random()
-        O1 = parent1[:int(alpha(len(parent1)))] + parent2[int((1 - alpha)(len(parent2))):]
-        O2 = parent2[:int(alpha(len(parent2)))] + parent1[int((1 - alpha)(len(parent1))):]
+        O1 = parent1[:round(alpha * (len(parent1)))] + \
+            parent2[round((1 - alpha) * (len(parent2))):]
+        O2 = parent2[:round(alpha * (len(parent2)))] + \
+            parent1[round((1 - alpha) * (len(parent1))):]
         return O1, O2
 
+<<<<<<< HEAD
     def mutate(self, offsprining):
         if random.random() > (1 / len(offsprining)):
             # si = offsprining.pop(int(len(offsprining) * random.random()))
@@ -163,37 +168,70 @@ class GA():
         if random.random() > (1 / len(offsprining)):
             ...
         return offsprining
+=======
+    def mutate(self, offspring):
 
-    def crossover_individuals(self):
-        return super().crossover_individuals()
+        mutationType = {
+            0: "Modify",
+            1: "Add",
+            2: "Delete"
+        }
 
-    def mutate_individual(self):
-        return super().mutate_individual()
+        for testcase in offspring.test_cluster:
+            if random.random() < (1 / len(offspring)):
+                mutation_type = mutationType[random.randint(0, 2)]
+                if (mutation_type == "Delete" or mutation_type == "Modify"):
+                    statement_idx = random.randint(
+                        1, len(testcase.statement_description) - 1)
+                    statement = testcase.statement_description[statement_idx]
+                    if (mutation_type == "Delete"):
+                        pass
+                    else:
+                        self.mutate_statement(statement)
+                        testcase.statement_list[statement_idx] = statement.statement
+                        # elif statement_type == "ConstructorStatement":
 
-    # def fitness_evaluation(self):
-    #     return int(20 * random.random())
+                        # elif statement_type == "FunctionStatement":
+                        #     arg_statement_list = []
+                        #     for i in testcase.statement_description:
+                        #         if i.statement_variable in statement.arg_list:
+                        #             typ = i.statement_type
+                else:
+                    testcase.make_statement()
+>>>>>>> f9f156e13f071c6087299ec05353e606e1d72877
+
+        return offspring
+
+    def mutate_statement(statement):
+        statement_type = type(statement).__name__
+        if statement_type == "PrimitiveStatement":
+            statement.generate_random_value()
+            statement.generate_statement()
+
+    def calculate_fitnesses(self):
+        current_best = []
+        for testsuit in self.population:
+            testsuit.find_suite_coverage(self.output_folder_path)
 
     def run_ga(self, epochs):
         self.initialize_population()
         # print(self.population[0].test_cluster[0].fitness)
-        current_best = []
-        for testsuit in self.population:
-            testsuit.find_suite_coverage()
-            # print(testsuit.suite_coverage)
+        self.calculate_fitnesses()
+        # print(testsuit.suite_coverage)
         for i in range(epochs):
-            alpha = random.random()
-            gamma = random.random()
-            
+
             while len(self.population) <= 2*(self.population_size):
                 P1 = self.selection()
                 P2 = self.selection()
-                while P1==P2:
+                alpha = random.random()
+                gamma = random.random()
+                while P1 == P2:
                     P1 = self.selection()
-                if alpha > self.crossover_rate:
+                if alpha < self.crossover_rate:
                     O1, O2 = self.crossover(P1, P2)
                 else:
                     O1, O2 = P1, P2
-                if gamma > self.mutation_rate:
+                if gamma < self.mutation_rate:
                     self.mutate(O1)
                     self.mutate(O2)
                 self.population.append(O1)
@@ -209,6 +247,4 @@ class GA():
                 100 coverage reached 
             '''
 
-        return 
-
-
+        return

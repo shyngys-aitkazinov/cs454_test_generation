@@ -55,7 +55,8 @@ class PrimitiveStatement(AbstractStatement):
             int: random.randint(-1000, 1000),
             bool: bool(random.getrandbits(1)),
             float: random.random(),
-            str: ''.join(random.choices(string.ascii_lowercase + string.digits, k=10))
+            str: ''.join(random.choices(
+                string.ascii_lowercase + string.digits, k=10))
         }
         self.statement_value = switch.get(self.statement_type)
 
@@ -63,7 +64,8 @@ class PrimitiveStatement(AbstractStatement):
         if (self.statement_value is None):
             self.generate_random_value()
 
-        self.statement = self.statement_variable + " = " + str(self.statement_value)
+        self.statement = self.statement_variable + \
+            " = " + str(self.statement_value)
 
 
 class FunctionStatement(AbstractStatement):
@@ -79,29 +81,28 @@ class FunctionStatement(AbstractStatement):
         statement = ""
         if self.statement_variable is not None:
             statement += (self.statement_variable + " = ")
-        statement += self.function_name + "( " + ', '.join(self.arg_list) + " )"
+        statement += self.function_name + \
+            "( " + ', '.join(self.arg_list) + " )"
         self.statement = statement
 
 
 class ConstructorStatement(AbstractStatement):
-    def __init__(self, statement_type, class_name, klass, arg_list, variable ):
+    def __init__(self, statement_type, class_name, klass, arg_list, variable):
         self.statement = ""
         self.statement_variable = variable
         self.arg_list = arg_list
         self.class_name = class_name
         self.klass = klass
         self.statement_type = statement_type
-    
 
     def generate_statement(self):
-        statement = self.statement_variable + " = " 
-        statement += self.class_name + "(" + ', '.join(self.arg_list) +  " )"
+        statement = self.statement_variable + " = "
+        statement += self.class_name + "(" + ', '.join(self.arg_list) + " )"
         self.statement = statement
-    
 
 
 class MethodStatement(AbstractStatement):
-    def __init__(self, statement_type, method_name, method, obj , arg_list, variable=None):
+    def __init__(self, statement_type, method_name, method, obj, arg_list, variable=None):
         self.statement_type = statement_type
         self.method = method
         self.method_name = method_name
@@ -110,14 +111,10 @@ class MethodStatement(AbstractStatement):
         self.obj = obj
         self.statement = ""
 
-
     def generate_statement(self):
         statement = ""
         if self.statement_variable is not None:
             statement += (self.statement_variable + " = ")
-        statement += self.obj + '.' + self.method_name + "( " + ', '.join(self.arg_list) + " )"
+        statement += self.obj + '.' + self.method_name + \
+            "( " + ', '.join(self.arg_list) + " )"
         self.statement = statement
-
-
-
-
