@@ -84,12 +84,13 @@ class AbstractGA(ABC):
 
 
 class GA(AbstractGA):
-    def __init__(self, configuration):
+    def __init__(self, configuration: dict):
         self.config = configuration
+        self.config
+
 
     def initialize_population(self, module_representation):
-        pop = [FunctionTestcase(module_representation, module_representation.name).generate_random_testcase() for _ in
-               range(10)]
+
         # print(pop)
         return pop
 

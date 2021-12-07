@@ -202,6 +202,7 @@ class Testcase(AbstractTestcase):
         f = open(path, "w+")
         f.write("import coverage\n")
 
+        # uncomment if timeout available
         f.write("import signal\n")
         f.write("def handler(signum, frame):\n")
         f.write("\tprint('Timeout of the test case')\n")
