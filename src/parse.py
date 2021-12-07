@@ -297,7 +297,8 @@ if __name__ == "__main__":
                     "limit_test": 10,
                     "limit_suite": 4,
                     "sut_info": t,
-                    "path": output_folder_path
+                    "path": output_folder_path,
+                    "selection": 'Tournament'
                 } 
 
     Ga = ga.GA(parameter)

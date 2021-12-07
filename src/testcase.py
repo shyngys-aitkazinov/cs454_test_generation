@@ -75,6 +75,7 @@ class Testcase(AbstractTestcase):
 
         # print("v coverage")
         fitness, runtime_error =  self.find_coverage()
+        print(fitness)
         if runtime_error: 
             self.fitness = 0
         else: 
@@ -235,16 +236,17 @@ class Testcase(AbstractTestcase):
         f.write("cov.json_report()\n")
         f.close()
 
-        # print("in exec exec")
+        print("in exec exec")
         run_time_error = False
         try:
+        
             exec(open(path).read())
         except Exception as e:
             run_time_error = True
             print("Testcase run failed")
-            # print(e)
+            print(e)
 
-        # print(path)
+        print(path)
 
         if os.path.isfile('crashed.txt'):
             run_time_error = True
@@ -259,7 +261,7 @@ class Testcase(AbstractTestcase):
         # print("Percent covered",
         #       data['files'][os.path.join('examples', (self.module_name + '.py'))]['summary']['percent_covered'])
 
-        os.remove('coverage.json')
+        # os.remove('coverage.json')
 
         return data['files'][os.path.join('examples', (self.module_name + '.py'))], run_time_error
 
