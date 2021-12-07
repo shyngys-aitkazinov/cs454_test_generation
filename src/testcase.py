@@ -2,6 +2,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import random
 import string
+from typing_extensions import runtime
 import parse
 import os
 from pathlib import Path
@@ -33,10 +34,12 @@ class Testcase(AbstractTestcase):
         self.statement_description = []
         self.modifiers = test_cluster.modifiers
         self.generators = test_cluster.generators
-        print(self.generators)
+        # print(self.generators)
         self.objects_under_test = test_cluster.objects_under_test
         self.limit = limit
         self.timeout_time = timeout_time
+        self.fitness = 0 
+        self.executed_lines = []
 
     def generate_random_testcase(self):
         # Add import statement
@@ -70,8 +73,13 @@ class Testcase(AbstractTestcase):
                     self.make_constructor(constructor_obj, obj_name)
                 self.make_method(test_obj, obj_name)
 
-        print("v coverage")
-        self.find_coverage()
+        # print("v coverage")
+        fitness, runtime_error =  self.find_coverage()
+        if runtime_error: 
+            self.fitness = 0
+        else: 
+            self.fitness = fitness['summary']['percent_covered']
+            self.executed_lines = fitness['executed_lines']
 
     def make_method(self, test_obj, obj_name):
         arg_list = []
@@ -145,9 +153,9 @@ class Testcase(AbstractTestcase):
             else:
                 var_name = self.generate_variable_name()
                 constr = list(self.generators[value])[0]
-                print("Constr: ", constr)
+                # print("Constr: ", constr)
                 self.make_constructor(constr, var_name)
-                print("Statement: ", self.statement_list[-1])
+                # print("Statement: ", self.statement_list[-1])
 
             arg_list.append(var_name)
 
@@ -227,17 +235,16 @@ class Testcase(AbstractTestcase):
         f.write("cov.json_report()\n")
         f.close()
 
-        print("in exec exec")
+        # print("in exec exec")
         run_time_error = False
         try:
             exec(open(path).read())
         except Exception as e:
             run_time_error = True
             print("Testcase run failed")
-            print(e)
+            # print(e)
 
-        print(path)
-        os.remove(path)
+        # print(path)
 
         if os.path.isfile('crashed.txt'):
             run_time_error = True
@@ -248,12 +255,13 @@ class Testcase(AbstractTestcase):
         with open('coverage.json', 'r') as report:
             data = json.load(report)
 
-        print("Percent covered",
-              data['files'][os.path.join('examples', (self.module_name + '.py'))]['summary']['percent_covered'])
+        os.remove(path)
+        # print("Percent covered",
+        #       data['files'][os.path.join('examples', (self.module_name + '.py'))]['summary']['percent_covered'])
 
         os.remove('coverage.json')
 
-        return data['files'][os.path.join('examples', (self.module_name + '.py'))]['summary'], run_time_error
+        return data['files'][os.path.join('examples', (self.module_name + '.py'))], run_time_error
 
     def is_primitive(self, var_type):
         return var_type == int or var_type == bool or var_type == float or var_type == str
