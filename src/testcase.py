@@ -243,7 +243,7 @@ class Testcase(AbstractTestcase):
         f.write("cov.json_report()\n")
         f.close()
 
-        print("in exec exec")
+        # print("in exec exec")
         run_time_error = False
         try:
         
@@ -253,7 +253,6 @@ class Testcase(AbstractTestcase):
             print("Testcase run failed")
             print(e)
 
-        # print(path)
 
         if os.path.isfile('crashed.txt'):
             run_time_error = True

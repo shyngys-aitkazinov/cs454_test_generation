@@ -1,6 +1,7 @@
 from __future__ import annotations
 # import datetime
 # import enum
+import arithmetics
 from parse import *
 import importlib
 import logging
@@ -18,6 +19,9 @@ import testsuite
 from optparse import OptionParser
 import utils
 
+def append_all_directories(path):
+    for (dirpath, dirnames, filenames) in os.walk(path):
+        sys.path.append(dirpath)
 
 
 
@@ -44,7 +48,14 @@ if __name__ == "__main__":
 
     # append examples folder
     sys.path.append(str(Path().parent.absolute()))
-    sys.path.append(str(Path().parent.absolute() / "examples"))
+    append_all_directories(str(Path().parent.absolute() / "examples"))
+    # sys.path.append(str(Path().parent.absolute() / "examples"))
+
+    # sys.path.append(str(Path().parent.absolute() / "examples" / "arithmetics"))
+    # os.listdir(str(Path().parent.absolute() / "examples")
+
+    append_all_directories(str(Path().parent.absolute() / "examples"))
+
 
     # output path
     output_folder_path = str(Path().parent.absolute() / "outputs")
