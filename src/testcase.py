@@ -43,6 +43,7 @@ class Testcase(AbstractTestcase):
         self.timeout_time = timeout_time
         self.fitness = 0 
         self.executed_lines = []
+        self.total_num_statements = 0
 
     def generate_random_testcase(self):
         # Add import statement
@@ -80,14 +81,19 @@ class Testcase(AbstractTestcase):
 
     def find_fitness(self, output_folder_path='.'):
 
-        fitness, runtime_error =  self.find_coverage(output_folder_path)
-        print(fitness)
-        if runtime_error:
+        coverage, runtime_error =  self.find_coverage(output_folder_path)
+
+        if coverage is None:
+            self.fitness = 0
+            self.executed_lines = []
+        elif runtime_error:
             self.fitness = 0
         else:
-            self.fitness = fitness['summary']['percent_covered']
-            self.executed_lines = fitness['executed_lines']
-        return self.fitness, self.executed_lines
+            self.fitness = coverage['summary']['percent_covered']
+            self.executed_lines = coverage['executed_lines']
+            self.total_num_statements = coverage['summary']['num_statements']
+
+        return self.fitness, self.executed_lines, self.total_num_statements
 
     def make_method(self, test_obj, obj_name):
         arg_list = []
@@ -260,19 +266,24 @@ class Testcase(AbstractTestcase):
             os.remove('crashed.txt')
 
         data = None
-        with open('coverage.json', 'r') as report:
-            data = json.load(report)
-
-        os.remove(path)
-        # print(data)
-
         module_path = os.path.join('examples', (utils.relative_path_from_module_name(self.module_name) + ".py"))
-        # print("Percent covered",
-        #       data['files'][module_path]['summary']['percent_covered'])
+        if os.path.isfile('coverage.json'):
+            with open('coverage.json', 'r') as report:
+                data = json.load(report)
 
-        os.remove('coverage.json')
+            os.remove(path)
+            # print(data)
+
+
+            # print("Percent covered",
+            #       data['files'][module_path]['summary']['percent_covered'])
+
+            os.remove('coverage.json')
 
         globallock.release()
+
+        if data is None or module_path not in data['files']:
+            return None, False
 
         return data['files'][module_path], run_time_error
 
