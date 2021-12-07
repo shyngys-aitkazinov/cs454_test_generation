@@ -110,7 +110,7 @@ class GA():
 
     def selection(self):
         # if random.random() > 0.5:
-        if self.selection_type == "Tournamnet":
+        if self.selection_type == "Tournament":
             '''
             Tournament selection:
             '''
@@ -144,7 +144,7 @@ class GA():
 
 
 
-    def crossover(parent1, parent2):
+    def crossover(self, parent1, parent2):
         '''
         Needs to be updated
         '''
@@ -153,7 +153,7 @@ class GA():
         O2 = parent2[:int(alpha(len(parent2)))] + parent1[int((1 - alpha)(len(parent1))):]
         return O1, O2
 
-    def mutate(offsprining):
+    def mutate(self, offsprining):
         if random.random() > (1 / len(offsprining)):
             # si = offsprining.pop(int(len(offsprining) * random.random()))
             '''
