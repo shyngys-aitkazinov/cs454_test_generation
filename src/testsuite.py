@@ -6,21 +6,23 @@ import random
 from typing import Tuple
 
 
-
 class TestSuite(object):
-    def __init__(self, limit_suite, limit_test, module: Tuple[str,str], sut_info, number=0):
+    def __init__(self, limit_suite, limit_test, module: Tuple[str, str], sut_info, number=0):
         self.test_cluster = []
         self.limit_suite = limit_suite
         self.limit_test = limit_test
         self.module = module[0]   # name
-        self.module_path = module[1] # relative path
+        self.module_path = module[1]  # relative path
         self.sut_info = sut_info
         self.suite_coverage = []
         self.number = number
-        self.number_of_lines = len(self.suite_coverage) # number of lines covered by the testsuite
-
+        # number of lines covered by the testsuite
+        self.number_of_lines = len(self.suite_coverage)
 
     # def delete_testuite(self):
+
+    def __len__(self):
+        return len(self.test_cluster)
 
     def generate_random_test_suite(self, output_folder_path='.'):
 
@@ -63,9 +65,9 @@ class TestSuite(object):
         for test in self.test_cluster:
             fitness, executed_lines = test.find_fitness(output_folder_path)
             if fitness > 0:
-                self.suite_coverage = list(set(self.suite_coverage) | set(executed_lines))
+                self.suite_coverage = list(
+                    set(self.suite_coverage) | set(executed_lines))
 
         self.suite_coverage.sort()
 
         return len(self.suite_coverage)
-        

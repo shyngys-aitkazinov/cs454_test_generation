@@ -1,4 +1,5 @@
 from __future__ import annotations
+import utils
 from abc import ABC, abstractmethod
 import random
 import string
@@ -10,7 +11,7 @@ import json
 from typing import Tuple
 from threading import Lock
 globallock = Lock()
-import utils
+
 
 class AbstractTestcase(ABC):
 
@@ -29,7 +30,7 @@ class AbstractTestcase(ABC):
 
 class Testcase(AbstractTestcase):
 
-    def __init__(self, module: Tuple[str,str], test_cluster: parse.TestCluster, limit, timeout_time=5):
+    def __init__(self, module: Tuple[str, str], test_cluster: parse.TestCluster, limit, timeout_time=5):
         self.module_name = module[0]
         self.module_path = module[1]
         self.count = 0
@@ -37,11 +38,10 @@ class Testcase(AbstractTestcase):
         self.statement_description = []
         self.modifiers = test_cluster.modifiers
         self.generators = test_cluster.generators
-        # print(self.generators)
         self.objects_under_test = test_cluster.objects_under_test
         self.limit = limit
         self.timeout_time = timeout_time
-        self.fitness = 0 
+        self.fitness = 0
         self.executed_lines = []
 
     def generate_random_testcase(self):
@@ -55,33 +55,34 @@ class Testcase(AbstractTestcase):
 
         # Retrieve objects_under_test randomly and make corresponding statements
         while (len(self.objects_under_test) > 0 and len(self.statement_list) < random_length):
-            test_obj = random.choice(list(self.objects_under_test))
-            test_obj_type = type(test_obj).__name__
+            self.make_statement()
 
-            if test_obj_type == "Function":
-                self.make_function(test_obj)
+    def make_statement(self):
+        test_obj = random.choice(list(self.objects_under_test))
+        test_obj_type = type(test_obj).__name__
 
-            elif test_obj_type == "Constructor":
-                self.make_constructor(test_obj)
+        if test_obj_type == "Function":
+            self.make_function(test_obj)
 
-            elif test_obj_type == "Method":
-                klass = test_obj.klass
-                constr_statement = self.find_statement(klass)
+        elif test_obj_type == "Constructor":
+            self.make_constructor(test_obj)
 
-                if constr_statement is not None:
-                    obj_name = constr_statement.statement_variable
-                else:
-                    constructor_obj = list(self.generators[klass])[0]
-                    obj_name = self.generate_variable_name()
-                    self.make_constructor(constructor_obj, obj_name)
-                self.make_method(test_obj, obj_name)
+        elif test_obj_type == "Method":
+            klass = test_obj.klass
+            constr_statement = self.find_statement(klass)
 
-        # print("v coverage")
+            if constr_statement is not None:
+                obj_name = constr_statement.statement_variable
+            else:
+                constructor_obj = list(self.generators[klass])[0]
+                obj_name = self.generate_variable_name()
+                self.make_constructor(constructor_obj, obj_name)
+            self.make_method(test_obj, obj_name)
 
     def find_fitness(self, output_folder_path='.'):
 
-        fitness, runtime_error =  self.find_coverage(output_folder_path)
-        print(fitness)
+        fitness, runtime_error = self.find_coverage(output_folder_path)
+        # print(fitness)
         if runtime_error:
             self.fitness = 0
         else:
@@ -204,7 +205,8 @@ class Testcase(AbstractTestcase):
 
     def find_coverage(self, output_folder_path='.'):
         file_name = "test_coverage.py"
-        folder_path = str(os.path.join(output_folder_path, ("coverage_files_" + self.module_name)))
+        folder_path = str(os.path.join(output_folder_path,
+                          ("coverage_files_" + self.module_name)))
         globallock.acquire()
         if not os.path.exists(folder_path):
             os.mkdir(folder_path)
@@ -218,13 +220,13 @@ class Testcase(AbstractTestcase):
         f.write("import coverage\n")
 
         # uncomment if timeout available
-        # f.write("import signal\n")
-        # f.write("def handler(signum, frame):\n")
-        # f.write("\tprint('Timeout of the test case')\n")
-        # f.write("\traise Exception('end of time')\n")
-        #
-        # f.write("signal.signal(signal.SIGALRM, handler)\n")
-        # f.write(f"signal.alarm({self.timeout_time})\n")
+        f.write("import signal\n")
+        f.write("def handler(signum, frame):\n")
+        f.write("\tprint('Timeout of the test case')\n")
+        f.write("\traise Exception('end of time')\n")
+
+        f.write("signal.signal(signal.SIGALRM, handler)\n")
+        f.write(f"signal.alarm({self.timeout_time})\n")
 
         f.write("cov = coverage.Coverage() \n")
         f.write("cov.set_option('run:branch', True) \n")
@@ -246,13 +248,12 @@ class Testcase(AbstractTestcase):
         # print("in exec exec")
         run_time_error = False
         try:
-        
+
             exec(open(path).read())
         except Exception as e:
             run_time_error = True
             print("Testcase run failed")
             print(e)
-
 
         if os.path.isfile('crashed.txt'):
             run_time_error = True
@@ -266,7 +267,8 @@ class Testcase(AbstractTestcase):
         os.remove(path)
         # print(data)
 
-        module_path = os.path.join('examples', (utils.relative_path_from_module_name(self.module_name) + ".py"))
+        module_path = os.path.join(
+            'examples', (utils.relative_path_from_module_name(self.module_name) + ".py"))
         # print("Percent covered",
         #       data['files'][module_path]['summary']['percent_covered'])
 

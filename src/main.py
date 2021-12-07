@@ -1,7 +1,7 @@
 from __future__ import annotations
 # import datetime
 # import enum
-import arithmetics
+# import arithmetics
 from parse import *
 import importlib
 import logging
@@ -19,11 +19,10 @@ import testsuite
 from optparse import OptionParser
 import utils
 
+
 def append_all_directories(path):
     for (dirpath, dirnames, filenames) in os.walk(path):
         sys.path.append(dirpath)
-
-
 
 
 if __name__ == "__main__":
@@ -43,7 +42,6 @@ if __name__ == "__main__":
     parser.add_option("-c", "--crossover_rate", action="store", type="float", dest="crossover_rate",
                       help="set crossover rate", default=0.5)
 
-
     (options, args) = parser.parse_args(sys.argv[1:])
 
     # append examples folder
@@ -56,7 +54,6 @@ if __name__ == "__main__":
 
     append_all_directories(str(Path().parent.absolute() / "examples"))
 
-
     # output path
     output_folder_path = str(Path().parent.absolute() / "outputs")
 
@@ -67,16 +64,16 @@ if __name__ == "__main__":
     cluster.generate_cluster("examples." + module_name)
 
     ga_config = {
-                    "pop_size": options.population_size,
-                    "mutation_rate": options.mutation_rate,
-                    "crossover_rate": options.crossover_rate,
-                    "module_name": (module_name, utils.relative_path_from_module_name(module_name)),
-                    "limit_test_lines": 10,
-                    "limit_suite_testcases": 4,
-                    "sut_info": cluster,
-                    "output_folder_path": output_folder_path,
-                    "selection": options.selection_type
-                }
+        "pop_size": options.population_size,
+        "mutation_rate": options.mutation_rate,
+        "crossover_rate": options.crossover_rate,
+        "module_name": (module_name, utils.relative_path_from_module_name(module_name)),
+        "limit_test_lines": 10,
+        "limit_suite_testcases": 4,
+        "sut_info": cluster,
+        "output_folder_path": output_folder_path,
+        "selection": options.selection_type
+    }
 
     Ga = ga.GA(ga_config)
     Ga.run_ga(options.epochs)

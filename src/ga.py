@@ -107,28 +107,28 @@ class GA():
             self.population.append(test_suite)
         return
 
-
     def selection(self):
         # if random.random() > 0.5:
         if self.selection_type == "Tournamnet":
             '''
             Tournament selection:
             '''
-            P1 = self.population[int(random.random()* len(self.population))]
-            P2 = self.population[int(random.random()* len(self.population))]
+            P1 = self.population[int(random.random() * len(self.population))]
+            P2 = self.population[int(random.random() * len(self.population))]
 
             while P1 == P2:
-                P2 = self.population[int(random.random()* len(self.population))]
+                P2 = self.population[int(
+                    random.random() * len(self.population))]
             if P1.number_of_lines >= P2.number_of_lines:
                 return P1
             else:
-                return P2 
+                return P2
         elif self.selection_type == "Roulette_wheel":
             '''
             Baised Roulette Wheel
             '''
             selector = random.random()
-            for testsuite in  self.population:
+            for testsuite in self.population:
                 if (1/testsuite.number_of_lines) < selector:
                     P1 = testsuite
                     self.population.remove(testsuite)
@@ -142,30 +142,55 @@ class GA():
             else:
                 return P2
 
-
-
     def crossover(self, parent1, parent2):
         '''
         Needs to be updated
         '''
         alpha = random.random()
-        O1 = parent1[:round(alpha * (len(parent1)))] + parent2[round((1 - alpha) * (len(parent2))):]
-        O2 = parent2[:round(alpha * (len(parent2)))] + parent1[round((1 - alpha) * (len(parent1))):]
+        O1 = parent1[:round(alpha * (len(parent1)))] + \
+            parent2[round((1 - alpha) * (len(parent2))):]
+        O2 = parent2[:round(alpha * (len(parent2)))] + \
+            parent1[round((1 - alpha) * (len(parent1))):]
         return O1, O2
 
     def mutate(self, offspring):
-        if random.random() > (1 / len(offspring)):
-            # si = offsprining.pop(int(len(offsprining) * random.random()))
-            '''
-            #TODO: find value of si and
-            # if possible find a way to replace si with the same type
-            '''
-        if random.random() > (1 / len(offspring)):
-            pass
+
+        mutationType = {
+            0: "Modify",
+            1: "Add",
+            2: "Delete"
+        }
+
+        for testcase in offspring.test_cluster:
+            if random.random() < (1 / len(offspring)):
+                mutation_type = mutationType[random.randint(0, 2)]
+                if (mutation_type == "Delete" or mutation_type == "Modify"):
+                    statement_idx = random.randint(
+                        1, len(testcase.statement_description) - 1)
+                    statement = testcase.statement_description[statement_idx]
+                    if (mutation_type == "Delete"):
+                        pass
+                    else:
+                        self.mutate_statement(statement)
+                        testcase.statement_list[statement_idx] = statement.statement
+                        # elif statement_type == "ConstructorStatement":
+
+                        # elif statement_type == "FunctionStatement":
+                        #     arg_statement_list = []
+                        #     for i in testcase.statement_description:
+                        #         if i.statement_variable in statement.arg_list:
+                        #             typ = i.statement_type
+                else:
+                    testcase.make_statement()
+
         return offspring
 
-    # def fitness_evaluation(self):
-    #     return int(20 * random.random())
+    def mutate_statement(statement):
+        statement_type = type(statement).__name__
+        if statement_type == "PrimitiveStatement":
+            statement.generate_random_value()
+            statement.generate_statement()
+
     def calculate_fitnesses(self):
         current_best = []
         for testsuit in self.population:
@@ -175,16 +200,15 @@ class GA():
         self.initialize_population()
         # print(self.population[0].test_cluster[0].fitness)
         self.calculate_fitnesses()
-            # print(testsuit.suite_coverage)
+        # print(testsuit.suite_coverage)
         for i in range(epochs):
 
-            
             while len(self.population) <= 2*(self.population_size):
                 P1 = self.selection()
                 P2 = self.selection()
                 alpha = random.random()
                 gamma = random.random()
-                while P1==P2:
+                while P1 == P2:
                     P1 = self.selection()
                 if alpha < self.crossover_rate:
                     O1, O2 = self.crossover(P1, P2)
@@ -207,5 +231,3 @@ class GA():
             '''
 
         return
-
-
