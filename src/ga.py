@@ -109,7 +109,7 @@ class GA():
 
     def selection(self):
         # if random.random() > 0.5:
-        if self.selection_type == "Tournamnet":
+        if self.selection_type == "Tournament":
             '''
             Tournament selection:
             '''
