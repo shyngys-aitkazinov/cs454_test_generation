@@ -7,7 +7,10 @@ import os
 from pathlib import Path
 from statement import *
 import json
-
+from typing import Tuple
+from threading import Lock
+globallock = Lock()
+import utils
 
 class AbstractTestcase(ABC):
 
@@ -26,8 +29,9 @@ class AbstractTestcase(ABC):
 
 class Testcase(AbstractTestcase):
 
-    def __init__(self, module_name: str, test_cluster: parse.TestCluster, limit, timeout_time=5):
-        self.module_name = module_name
+    def __init__(self, module: Tuple[str,str], test_cluster: parse.TestCluster, limit, timeout_time=5):
+        self.module_name = module[0]
+        self.module_path = module[1]
         self.count = 0
         self.statement_list = []
         self.statement_description = []
@@ -74,9 +78,9 @@ class Testcase(AbstractTestcase):
 
         # print("v coverage")
 
-    def find_fitness(self):
+    def find_fitness(self, output_folder_path='.'):
 
-        fitness, runtime_error =  self.find_coverage()
+        fitness, runtime_error =  self.find_coverage(output_folder_path)
         print(fitness)
         if runtime_error:
             self.fitness = 0
@@ -198,11 +202,10 @@ class Testcase(AbstractTestcase):
         s = random.choice(statement_list)
         return s
 
-    def find_coverage(self):
+    def find_coverage(self, output_folder_path='.'):
         file_name = "test_coverage.py"
-        folder_path = str(Path().absolute() /
-                          ("coverage_files_" + self.module_name))
-
+        folder_path = str(os.path.join(output_folder_path, ("coverage_files_" + self.module_name)))
+        globallock.acquire()
         if not os.path.exists(folder_path):
             os.mkdir(folder_path)
 
@@ -250,7 +253,7 @@ class Testcase(AbstractTestcase):
             print("Testcase run failed")
             print(e)
 
-        print(path)
+        # print(path)
 
         if os.path.isfile('crashed.txt'):
             run_time_error = True
@@ -262,12 +265,17 @@ class Testcase(AbstractTestcase):
             data = json.load(report)
 
         os.remove(path)
+        # print(data)
+
+        module_path = os.path.join('examples', (utils.relative_path_from_module_name(self.module_name) + ".py"))
         # print("Percent covered",
-        #       data['files'][os.path.join('examples', (self.module_name + '.py'))]['summary']['percent_covered'])
+        #       data['files'][module_path]['summary']['percent_covered'])
 
         os.remove('coverage.json')
 
-        return data['files'][os.path.join('examples', (self.module_name + '.py'))], run_time_error
+        globallock.release()
+
+        return data['files'][module_path], run_time_error
 
     def is_primitive(self, var_type):
         return var_type == int or var_type == bool or var_type == float or var_type == str

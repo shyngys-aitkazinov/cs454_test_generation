@@ -8,6 +8,7 @@ import random
 from parse import *
 from inspect import *
 from testcase import *
+import testsuite
 
 
 class AbstractGA(ABC):
@@ -90,8 +91,8 @@ class GA():
         self.population_size = configuration["pop_size"]
         self.mutation_rate = configuration["mutation_rate"]
         self.crossover_rate = configuration["crossover_rate"]
-        self.module_name = configuration["module_name"]
-
+        self.module_name = configuration["module_name"][0]
+        self.module_name_path = configuration["module_name"][1]
         self.limit_suite = configuration["limit_suite_testcases"]
         self.limit_test = configuration["limit_test_lines"]
         self.output_folder_path = configuration["output_folder_path"]
@@ -100,10 +101,12 @@ class GA():
 
     def initialize_population(self):
         for i in range(self.population_size):
-            test_suite = testsuite.TestSuite(self.limit_suite, self.limit_test, self.module_name, self.sut_info, i)
+            test_suite = testsuite.TestSuite(self.limit_suite, self.limit_test,
+                                             (self.module_name, self.module_name_path), self.sut_info, i)
             test_suite.generate_random_test_suite(self.output_folder_path)
             self.population.append(test_suite)
         return
+
 
     def selection(self):
         # if random.random() > 0.5:
@@ -150,41 +153,44 @@ class GA():
         O2 = parent2[:round(alpha * (len(parent2)))] + parent1[round((1 - alpha) * (len(parent1))):]
         return O1, O2
 
-    def mutate(self, offsprining):
-        if random.random() > (1 / len(offsprining)):
+    def mutate(self, offspring):
+        if random.random() > (1 / len(offspring)):
             # si = offsprining.pop(int(len(offsprining) * random.random()))
             '''
             #TODO: find value of si and
             # if possible find a way to replace si with the same type
             '''
-        if random.random() > (1 / len(offsprining)):
+        if random.random() > (1 / len(offspring)):
             pass
-        return offsprining
+        return offspring
 
     # def fitness_evaluation(self):
     #     return int(20 * random.random())
+    def calculate_fitnesses(self):
+        current_best = []
+        for testsuit in self.population:
+            testsuit.find_suite_coverage(self.output_folder_path)
 
     def run_ga(self, epochs):
         self.initialize_population()
         # print(self.population[0].test_cluster[0].fitness)
-        current_best = []
-        for testsuit in self.population:
-            testsuit.find_suite_coverage()
+        self.calculate_fitnesses()
             # print(testsuit.suite_coverage)
         for i in range(epochs):
-            alpha = random.random()
-            gamma = random.random()
+
             
             while len(self.population) <= 2*(self.population_size):
                 P1 = self.selection()
                 P2 = self.selection()
+                alpha = random.random()
+                gamma = random.random()
                 while P1==P2:
                     P1 = self.selection()
-                if alpha > self.crossover_rate:
+                if alpha < self.crossover_rate:
                     O1, O2 = self.crossover(P1, P2)
                 else:
                     O1, O2 = P1, P2
-                if gamma > self.mutation_rate:
+                if gamma < self.mutation_rate:
                     self.mutate(O1)
                     self.mutate(O2)
                 self.population.append(O1)

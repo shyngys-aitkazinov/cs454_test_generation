@@ -3,15 +3,17 @@ import os
 import sys
 from pathlib import Path
 import random
+from typing import Tuple
 
 
 
 class TestSuite(object):
-    def __init__(self, limit_suite, limit_test, module, sut_info, number=0):
+    def __init__(self, limit_suite, limit_test, module: Tuple[str,str], sut_info, number=0):
         self.test_cluster = []
         self.limit_suite = limit_suite
         self.limit_test = limit_test
-        self.module = module
+        self.module = module[0]   # name
+        self.module_path = module[1] # relative path
         self.sut_info = sut_info
         self.suite_coverage = []
         self.number = number
@@ -25,7 +27,7 @@ class TestSuite(object):
         random_num_testcases = random.randint(1, self.limit_suite + 1)
         for i in range(random_num_testcases):
             testcase = t.Testcase(
-                self.module, self.sut_info, self.limit_test)
+                (self.module, self.module_path), self.sut_info, self.limit_test)
             testcase.generate_random_testcase()
             self.test_cluster.append(testcase)
 
@@ -54,12 +56,12 @@ class TestSuite(object):
             f.close()
             count += 1
 
-    def find_suite_coverage(self):
+    def find_suite_coverage(self, output_folder_path="."):
         """
         returns line covered by the testsuit, union of each  test case line coverage:
         """
         for test in self.test_cluster:
-            fitness, executed_lines = test.find_fitness()
+            fitness, executed_lines = test.find_fitness(output_folder_path)
             if fitness > 0:
                 self.suite_coverage = list(set(self.suite_coverage) | set(executed_lines))
 
