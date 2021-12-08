@@ -109,7 +109,7 @@ class GA():
 
     def selection(self):
         # if random.random() > 0.5:
-        if self.selection_type == "Tournament":
+        if self.selection_type == "tournament":
             '''
             Tournament selection:
             '''
@@ -119,13 +119,14 @@ class GA():
             while P1 == P2:
                 P2 = self.population[int(
                     random.random() * len(self.population))]
+            print(type(P1.number_of_lines).__name__, type(P2).__name__)
             if P1.number_of_lines >= P2.number_of_lines:
                 return P1
             else:
                 return P2
-        elif self.selection_type == "Roulette_wheel":
+        elif self.selection_type == "roulette_wheel":
             '''
-            Baised Roulette Wheel
+            Biased Roulette Wheel
             '''
             selector = random.random()
             for testsuite in self.population:
@@ -147,10 +148,10 @@ class GA():
         Needs to be updated
         '''
         alpha = random.random()
-        O1 = parent1[:round(alpha * (len(parent1)))] + \
-            parent2[round((1 - alpha) * (len(parent2))):]
-        O2 = parent2[:round(alpha * (len(parent2)))] + \
-            parent1[round((1 - alpha) * (len(parent1))):]
+        O1 = parent1.test_cluster[:round(alpha * (len(parent1)))] + \
+            parent2.test_cluster[round((1 - alpha) * (len(parent2))):]
+        O2 = parent2.test_cluster[:round(alpha * (len(parent2)))] + \
+            parent1.test_cluster[round((1 - alpha) * (len(parent1))):]
         return O1, O2
 
     def mutate(self, offspring):
@@ -160,6 +161,8 @@ class GA():
             1: "Add",
             2: "Delete"
         }
+
+        print("Offspring type: ", type(offspring).__name__)
 
         for testcase in offspring.test_cluster:
             if random.random() < (1 / len(offspring)):
@@ -185,11 +188,12 @@ class GA():
 
         return offspring
 
-    def mutate_statement(statement):
+    def mutate_statement(self, statement):
         statement_type = type(statement).__name__
         if statement_type == "PrimitiveStatement":
             statement.generate_random_value()
             statement.generate_statement()
+        # elif statement_type == "ConstructorStatement":
 
     def calculate_fitnesses(self):
         current_best = []
@@ -200,6 +204,7 @@ class GA():
         self.initialize_population()
         # print(self.population[0].test_cluster[0].fitness)
         self.calculate_fitnesses()
+        current_best = []
         # print(testsuit.suite_coverage)
         for i in range(epochs):
 
