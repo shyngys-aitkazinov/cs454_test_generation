@@ -59,6 +59,7 @@ if __name__ == "__main__":
     cluster = TestCluster()
 
     module_name = options.module_name
+    print(module_name)
 
     cluster.generate_cluster("examples." + module_name)
 

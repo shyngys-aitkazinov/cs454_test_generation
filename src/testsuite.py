@@ -17,7 +17,7 @@ class TestSuite(object):
         self.suite_coverage = []
         self.number = number
         # number of lines covered by the testsuite
-        self.number_of_lines = len(self.suite_coverage)
+        self.number_of_lines = 0
 
     # def delete_testuite(self):
 
@@ -74,9 +74,11 @@ class TestSuite(object):
                 self.suite_coverage = list(
                     set(self.suite_coverage) | set(executed_lines))
         self.suite_coverage.sort()
+        self.number_of_lines = len(self.suite_coverage)
 
         if total_number > 0:
             print("Suite coverage:", len(self.suite_coverage) / total_number)
             return len(self.suite_coverage) / total_number
         print("Suite coverage:", len(self.suite_coverage))
+
         return len(self.suite_coverage)
