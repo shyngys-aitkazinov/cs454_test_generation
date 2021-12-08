@@ -142,10 +142,6 @@ class GA():
             else:
                 return P2
 
-<<<<<<< HEAD
-
-=======
->>>>>>> f9f156e13f071c6087299ec05353e606e1d72877
     def crossover(self, parent1, parent2):
         '''
         Needs to be updated
@@ -157,18 +153,6 @@ class GA():
             parent1[round((1 - alpha) * (len(parent1))):]
         return O1, O2
 
-<<<<<<< HEAD
-    def mutate(self, offsprining):
-        if random.random() > (1 / len(offsprining)):
-            # si = offsprining.pop(int(len(offsprining) * random.random()))
-            '''
-            #TODO: find value of si and
-            # if possible find a way to replace si with the same type
-            '''
-        if random.random() > (1 / len(offsprining)):
-            ...
-        return offsprining
-=======
     def mutate(self, offspring):
 
         mutationType = {
@@ -198,7 +182,6 @@ class GA():
                         #             typ = i.statement_type
                 else:
                     testcase.make_statement()
->>>>>>> f9f156e13f071c6087299ec05353e606e1d72877
 
         return offspring
 
@@ -209,13 +192,13 @@ class GA():
             statement.generate_statement()
 
     def calculate_fitnesses(self):
-        current_best = []
         for testsuit in self.population:
             testsuit.find_suite_coverage(self.output_folder_path)
 
     def run_ga(self, epochs):
         self.initialize_population()
         # print(self.population[0].test_cluster[0].fitness)
+        current_best = []
         self.calculate_fitnesses()
         # print(testsuit.suite_coverage)
         for i in range(epochs):
@@ -246,5 +229,6 @@ class GA():
             #TODO: I will add stop condition if
                 100 coverage reached 
             '''
-
-        return
+            if current_best[0].k == y:
+                return current_best
+        return current_best

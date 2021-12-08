@@ -267,11 +267,6 @@ class Testcase(AbstractTestcase):
             os.remove('crashed.txt')
 
         data = None
-<<<<<<< HEAD
-        if os.path.isfile('coverage.json'):
-            with open('coverage.json', 'r') as report:
-                data = json.load(report)
-=======
         module_path = os.path.join(
             'examples', (utils.relative_path_from_module_name(self.module_name) + ".py"))
         if os.path.isfile('coverage.json'):
@@ -285,21 +280,13 @@ class Testcase(AbstractTestcase):
             #       data['files'][module_path]['summary']['percent_covered'])
 
             os.remove('coverage.json')
->>>>>>> f9f156e13f071c6087299ec05353e606e1d72877
 
         globallock.release()
 
-<<<<<<< HEAD
-        # os.remove('coverage.json')
-        if data == None:
-            return [], run_time_error
-        return data['files'][os.path.join('examples', (self.module_name + '.py'))], run_time_error
-=======
         if data is None or module_path not in data['files']:
             return None, False
 
         return data['files'][module_path], run_time_error
->>>>>>> f9f156e13f071c6087299ec05353e606e1d72877
 
     def is_primitive(self, var_type):
         return var_type == int or var_type == bool or var_type == float or var_type == str
