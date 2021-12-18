@@ -72,7 +72,8 @@ if __name__ == "__main__":
         "limit_suite_testcases": 4,
         "sut_info": cluster,
         "output_folder_path": output_folder_path,
-        "selection": options.selection_type
+        "selection": options.selection_type,
+        "random_testcase_rate": 0.1
     }
 
     Ga = ga.GA(ga_config)

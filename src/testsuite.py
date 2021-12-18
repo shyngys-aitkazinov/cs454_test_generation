@@ -37,6 +37,15 @@ class TestSuite(object):
 
         # print(self.test_cluster)
         self.write_test_suite(output_folder_path)
+        return
+
+
+    def generate_random_testcase(self, output_folder_path='.'):
+
+        testcase = t.Testcase(
+            (self.module, self.module_path), self.sut_info, self.limit_test)
+        testcase.generate_random_testcase()
+        self.test_cluster.append(testcase)
 
         return
 
@@ -89,4 +98,4 @@ class TestSuite(object):
 
         print(f">>Test suite {self.number} coverage: {self.suite_fitness}")
 
-        return len(self.suite_coverage)
+        return self.suite_fitness
