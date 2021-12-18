@@ -34,7 +34,7 @@ class TestSuite(object):
             self.test_cluster.append(testcase)
 
         # print(self.test_cluster)
-        self.write_test_suite(output_folder_path)
+        # self.write_test_suite(output_folder_path)
         return
 
     def generate_random_testcase(self, output_folder_path='.'):
@@ -72,7 +72,7 @@ class TestSuite(object):
         """
         total_number = 0
         self.suite_coverage = []
-        print(f">>Find test suite {self.number} coverage")
+        # print(f">>Find test suite {self.number} coverage")
         test_number = 0
         for test in self.test_cluster:
 
@@ -80,15 +80,15 @@ class TestSuite(object):
                 output_folder_path)
 
             total_number = max(total_number_of_lines, total_number)
-            print(
-                f">>>>Testcase {test_number}: percent covered (fitness) {fitness}, module lines count:{total_number}")
+            # print(
+            #     f">>>>Testcase {test_number}: percent covered (fitness) {fitness}, module lines count:{total_number}")
             if fitness > 0:
                 self.suite_coverage = list(
                     set(self.suite_coverage) | set(executed_lines))
             test_number += 1
         self.suite_coverage.sort()
         self.number_of_lines = len(self.suite_coverage)
-        print(self.suite_coverage)
+        # print(self.suite_coverage)
         # calculate suite fitness
         if total_number > 0:
             self.suite_fitness = len(self.suite_coverage) / total_number

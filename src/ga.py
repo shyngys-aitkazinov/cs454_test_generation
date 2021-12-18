@@ -285,7 +285,7 @@ class GA():
         testcase.statement_list.remove(statement.statement)
         testcase.statement_description.remove(statement)
 
-    def calculate_fitnesses(self):
+    def calculate_fitnesses(self, statistics):
         all_fitnesses = []
         for testsuit in self.population:
             suite_fitness = testsuit.find_suite_coverage(
@@ -294,8 +294,8 @@ class GA():
 
         best = max(all_fitnesses)
         ave = sum(all_fitnesses) / len(all_fitnesses)
-        self.stats["average fitness"].append(ave)
-        self.stats["best fitness"].append(best)
+        statistics["average fitness"].append(ave)
+        statistics["best fitness"].append(best)
 
     def clean_suite(self):
         for testsuite in self.population:
@@ -327,12 +327,37 @@ class GA():
                     self.normalized_fitness = 1
                 print("Normalized coverage", self.normalized_fitness)
 
+    def run_random_search(self, epochs):
+        stats = {
+            "average fitness": [],
+            "best fitness": [],
+            "max": []
+        }
+        for e in range(epochs):
+            self.population = []
+
+            for i in range(self.population_size):
+                test_suite = testsuite.TestSuite(self.limit_suite, self.limit_test,
+                                                 (self.module_name, self.module_name_path), self.sut_info, i)
+                test_suite.generate_random_test_suite(self.output_folder_path)
+                self.population.append(test_suite)
+            self.calculate_fitnesses(stats)
+
+            if e == 0:
+                stats["max"].append(stats["best fitness"][-1])
+            else:
+                stats["max"].append(
+                    max(stats["best fitness"][-1], stats["max"][-1]))
+
+        return stats
+
     def run_ga(self, epochs):
         self.initialize_population()
         self.initialize_coverage()
 
         for i in range(epochs):
-            self.calculate_fitnesses()
+            print(f"**************   Start of {i} epoch     ***********")
+            self.calculate_fitnesses(self.stats)
             while len(self.population) <= 2*(self.population_size):
                 P1 = self.selection()
                 P2 = self.selection()
