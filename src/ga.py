@@ -119,8 +119,8 @@ class GA():
             while P1 == P2:
                 P2 = self.population[int(
                     random.random() * len(self.population))]
-            print(type(P1.number_of_lines).__name__, type(P2).__name__)
-            if P1.number_of_lines >= P2.number_of_lines:
+            # print(type(P1.number_of_lines).__name__, type(P2).__name__)
+            if len(P1) >= len(P2):
                 return P1
             else:
                 return P2
@@ -136,32 +136,43 @@ class GA():
             for testsuite in self.population:
                 if (1/testsuite.number_of_lines) < selector:
                     P2 = testsuite
-            self.population.append(P1)
+            # self.population.append(P1)
 
-            if P1.number_of_lines >= P2.number_of_lines:
+            if len(P1) >= len(P2):
                 return P1
             else:
                 return P2
 
     def crossover(self, parent1, parent2):
-        '''
-        Needs to be updated
-        '''
         alpha = random.random()
-        O1 = parent1.test_cluster[:round(alpha * (len(parent1)))] + \
+        # Copy parent's information
+        limit_suite = parent1.limit_suite
+        limit_test = parent1.limit_test
+        module = parent1.module
+        module_path = parent1.module_path
+        sut_info = parent1.sut_info
+        number = parent1.number
+
+        # Create child test suites
+        O1 = testsuite.TestSuite(
+            limit_suite, limit_test, (module, module_path), sut_info, number)
+        O2 = testsuite.TestSuite(
+            limit_suite, limit_test, (module, module_path), sut_info, number)
+
+        O1.test_cluster = parent1.test_cluster[:round(alpha * (len(parent1)))] + \
             parent2.test_cluster[round((1 - alpha) * (len(parent2))):]
-        O2 = parent2.test_cluster[:round(alpha * (len(parent2)))] + \
+        O2.test_cluster = parent2.test_cluster[:round(alpha * (len(parent2)))] + \
             parent1.test_cluster[round((1 - alpha) * (len(parent1))):]
+
         return O1, O2
 
-    def mutate(self, offspring):
+    def mutate(self, offspring: testsuite.TestSuite):
 
         mutationType = {
             0: "Modify",
             1: "Add",
             2: "Delete"
         }
-
 
         for testcase in offspring.test_cluster:
             if random.random() < (1 / len(offspring)):
@@ -210,12 +221,14 @@ class GA():
             while len(self.population) <= 2*(self.population_size):
                 P1 = self.selection()
                 P2 = self.selection()
+                print("P1: ", type(P1).__name__)
                 alpha = random.random()
                 gamma = random.random()
                 while P1 == P2:
                     P1 = self.selection()
                 if alpha < self.crossover_rate:
                     O1, O2 = self.crossover(P1, P2)
+                    print("O1: ", type(O1).__name__)
                 else:
                     O1, O2 = P1, P2
                 if gamma < self.mutation_rate:
@@ -223,6 +236,7 @@ class GA():
                     self.mutate(O2)
                 self.population.append(O1)
                 self.population.append(O1)
+            print("Population: ", self.population)
             self.population.sort(key=lambda testsuit: testsuit.number_of_lines)
             for i in range(self.population_size):
                 current_best.append(self.population[i])
