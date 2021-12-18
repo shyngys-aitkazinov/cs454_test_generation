@@ -188,11 +188,12 @@ class GA():
                     statement_idx = random.randint(
                         1, len(testcase.statement_description) - 1)
                     statement = testcase.statement_description[statement_idx]
-                    if (mutation_type == "Delete"):
-                        self.delete_statement(statement_idx, statement, testcase)
-                    else:
-                        self.mutate_statement(
-                            statement_idx, statement, testcase)
+                    # if (mutation_type == "Delete"):
+                    self.delete_statement(
+                        statement_idx, statement, testcase)
+                    # else:
+                    #     self.mutate_statement(
+                    #         statement_idx, statement, testcase)
 
                     print("After: ", testcase.statement_list)
                 else:
@@ -224,40 +225,75 @@ class GA():
                 self.mutate_statement(s[0], s[1], testcase)
             statement.generate_statement()
 
-    def  find_occurrence(self, statement_variable, testcase):
+    # def  find_occurrence(self, statement_variable, testcase):
 
-        for i in range(len(testcase.statement_description)):
+    #     for i in range(len(testcase.statement_description)):
+    #     if len(testcase.statement_list) < 2:
+    #         continue
+    #     elif random.random() < (1 / len(offspring)):
+    #         mutation_type = mutationType[random.randint(0, 2)]
+    #         if (mutation_type == "Delete" or mutation_type == "Modify"):
+    #             print("Before: ", testcase.statement_list)
+    #             statement_idx = random.randint(
+    #                 1, len(testcase.statement_description) - 1)
+    #             statement = testcase.statement_description[statement_idx]
+    #             if (mutation_type == "Delete"):
+    #                 self.delete_statement(statement_idx, statement, testcase)
+    #             else:
+    #                 self.mutate_statement(
+    #                     statement_idx, statement, testcase)
 
+    #             print("After: ", testcase.statement_list)
+    #         else:
+    #             testcase.make_statement()
+    #             print("After: ", testcase.statement_list)
 
-        if len(testcase.statement_list) < 2:
-            continue
-        elif random.random() < (1 / len(offspring)):
-            mutation_type = mutationType[random.randint(0, 2)]
-            if (mutation_type == "Delete" or mutation_type == "Modify"):
-                print("Before: ", testcase.statement_list)
-                statement_idx = random.randint(
-                    1, len(testcase.statement_description) - 1)
-                statement = testcase.statement_description[statement_idx]
-                if (mutation_type == "Delete"):
-                    self.delete_statement(statement_idx, statement, testcase)
-                else:
-                    self.mutate_statement(
-                        statement_idx, statement, testcase)
-
-                print("After: ", testcase.statement_list)
-            else:
-                testcase.make_statement()
-                print("After: ", testcase.statement_list)
-
-        return offspring
-
+    #     return offspring
 
     def delete_statement(self, index, statement, testcase):
-        print("Statement: ", statement.statement)
-        statement_type = type(statement).__name__
-        if statement.statement_variable is None or find_occurrence
+        print("Delete statement: ", statement.statement)
+        statement_kind = type(statement).__name__
+        statement_type = statement.statement_type
+        statement_variable = statement.statement_variable
+        occurences = []
+        replacements = []
 
+        # If the statement to delete is the last one
+        if index == len(testcase.statement_description) - 1:
+            testcase.statement_list.remove(statement.statement)
+            testcase.statement_description.pop()
+            return
+        # Find occurences of the statement variable
+        for idx, st in enumerate(testcase.statement_description[index + 1:]):
+            if type(st).__name__ == "PrimitiveStatement":
+                continue
+            elif statement_variable in st.arg_list:
+                v_idx = []
+                for i, arg in enumerate(st.arg_list):
+                    if arg == statement_variable:
+                        v_idx.append(i)
+                occurences.append((idx, v_idx, st))
+        # Find replacements from before
+        for idx, st in enumerate(testcase.statement_description[:index]):
+            if type(st).__name__ == statement_kind and st.statement_type == statement_type:
+                replacements.append(st)
 
+        if len(replacements) > 0:
+            for idx, v_idx, st in occurences:
+                for j in v_idx:
+                    replacement = random.choice(replacements)
+                    st.arg_list[j] = replacement.statement_variable
+                st.generate_statement()
+                testcase.statement_list[idx] = st.statement
+        else:
+            for idx, v_idx, st in occurences:
+                # st_to_remove = st.statement
+                # testcase.statement_description.remove(st)
+                # testcase.statement_list.remove(st_to_remove)
+                self.delete_statement(idx, st, testcase)
+
+        testcase.statement_list.remove(statement.statement)
+        testcase.statement_description.remove(statement)
 
         # elif statement_type == "ConstructorStatement" or statement_type == "FunctionStatement" or statement_type == "MethodStatement":
         #     arg_list = statement.arg_list
@@ -270,23 +306,23 @@ class GA():
         #     for s in mutate_list:
         #         self.mutate_statement(s[0], s[1], testcase)
 
-        if statement_type == "PrimitiveStatement":
-            statement.generate_random_value()
-            statement.generate_statement()
-            print('Statement_orimitive: ', statement.statement)
-            print('Testcase: ', testcase.statement_list)
-            testcase.statement_list[index] = statement.statement
-        elif statement_type == "ConstructorStatement" or statement_type == "FunctionStatement" or statement_type == "MethodStatement":
-            arg_list = statement.arg_list
-            mutate_list = []
-            for i, d in enumerate(testcase.statement_description):
-                if type(d).__name__ == "ImportStatement":
-                    continue
-                if d.statement_variable in arg_list:
-                    mutate_list.append((i, d))
-            for s in mutate_list:
-                self.mutate_statement(s[0], s[1], testcase)
-            statement.generate_statement()
+        # if statement_type == "PrimitiveStatement":
+        #     statement.generate_random_value()
+        #     statement.generate_statement()
+        #     print('Statement_orimitive: ', statement.statement)
+        #     print('Testcase: ', testcase.statement_list)
+        #     testcase.statement_list[index] = statement.statement
+        # elif statement_type == "ConstructorStatement" or statement_type == "FunctionStatement" or statement_type == "MethodStatement":
+        #     arg_list = statement.arg_list
+        #     mutate_list = []
+        #     for i, d in enumerate(testcase.statement_description):
+        #         if type(d).__name__ == "ImportStatement":
+        #             continue
+        #         if d.statement_variable in arg_list:
+        #             mutate_list.append((i, d))
+        #     for s in mutate_list:
+        #         self.mutate_statement(s[0], s[1], testcase)
+        #     statement.generate_statement()
 
     def calculate_fitnesses(self):
         current_best = []
@@ -295,7 +331,6 @@ class GA():
 
     def clean_suite(self):
         pass
-
 
     def run_ga(self, epochs):
         self.initialize_population()

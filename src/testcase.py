@@ -259,11 +259,13 @@ class Testcase(AbstractTestcase):
         except Exception as e:
             run_time_error = True
             print("Testcase run failed")
+            print(self.statement_list)
             print(e)
 
         if os.path.isfile('crashed.txt'):
             run_time_error = True
             print("Testcase run failed")
+            print(self.statement_list)
             os.remove('crashed.txt')
 
         data = None
