@@ -214,6 +214,10 @@ class GA():
         for testsuit in self.population:
             testsuit.find_suite_coverage(self.output_folder_path)
 
+    def clean_suite(self):
+        pass
+
+
     def run_ga(self, epochs):
         self.initialize_population()
         # print(self.population[0].test_cluster[0].fitness)
@@ -235,24 +239,17 @@ class GA():
                 P2 = copy.deepcopy(P2)
                 print(P1, P2)
                 if alpha < self.crossover_rate:
-                    print("P1")
-                    for t in P1.test_cluster:
-                        print(t)
-                    print("P2")
-                    for t in P2.test_cluster:
-                        print(t)
                     O1, O2 = self.crossover(P1, P2)
-                    print(O1.test_cluster)
-                    print(O2.test_cluster)
-                    print("O1: ", type(O1).__name__)
-                    return
                 else:
                     O1, O2 = P1, P2
                 if gamma < self.mutation_rate:
                     self.mutate(O1)
                     self.mutate(O2)
+                O1.find_suite_coverage(self.output_folder_path)
+                O2.find_suite_coverage(self.output_folder_path)
                 self.population.append(O1)
                 self.population.append(O1)
+
             print("Population: ", self.population)
             self.population.sort(key=lambda testsuit: testsuit.number_of_lines)
             for i in range(self.population_size):
