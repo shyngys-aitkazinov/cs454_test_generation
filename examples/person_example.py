@@ -1,7 +1,7 @@
 import random 
 
 class Person:
-    def __init__(self, name: str , age: int, sex: str, interest: str):
+    def __init__(self, name: str , age: int, sex: str, interest: str) -> None:
         self.name = name 
         self.age = age
         self.sex = sex
