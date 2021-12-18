@@ -119,11 +119,16 @@ class GA():
             while P1 == P2:
                 P2 = self.population[int(
                     random.random() * len(self.population))]
-            print(type(P1.number_of_lines).__name__, type(P2).__name__)
-            if P1.number_of_lines >= P2.number_of_lines:
-                return P1
+            if type(P1) == list or type(P2) == list:
+                while type(P1) == list or type(P2) == list:
+                    P1 = self.population[int(random.random() * len(self.population))]
+                    P2 = self.population[int(random.random() * len(self.population))]
+            # print()
             else:
-                return P2
+                if P1.number_of_lines >= P2.number_of_lines:
+                    return P1
+                else:
+                    return P2
         elif self.selection_type == "roulette_wheel":
             '''
             Biased Roulette Wheel
@@ -234,6 +239,5 @@ class GA():
             #TODO: I will add stop condition if
                 100 coverage reached 
             '''
-            if current_best[0].k == y:
-                return current_best
+          
         return current_best
