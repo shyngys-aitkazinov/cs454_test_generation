@@ -2,12 +2,16 @@ from __future__ import annotations
 # from abc import ABC, abstractmethod
 from array import array
 from tokenize import String
-import string 
+import string
 import random
 # from typing_extensions import Unpack
 from parse import *
-from inspect import*
-from testcase import*
+from inspect import *
+from testcase import *
+import testsuite
+import testcase as t
+import copy
+import time
 
 
 class AbstractGA(ABC):
@@ -81,85 +85,330 @@ class AbstractGA(ABC):
         :param epochs:
         :return:
         """
-class GA(AbstractGA):
+
+
+class GA():
     def __init__(self, configuration):
-        self.config = configuration
 
-    def initialize_population(self, module_representation):
-        pop = [FunctionTestcase(module_representation, module_representation.name).generate_random_testcase() for _ in range(10)]
-        # print(pop)
-        return pop
+        self.sut_info = configuration["sut_info"]
+        self.population_size = configuration["pop_size"]
+        self.mutation_rate = configuration["mutation_rate"]
+        self.crossover_rate = configuration["crossover_rate"]
+        self.random_testcase_rate = configuration["random_testcase_rate"]
+
+        self.module_name = configuration["module_name"][0]
+        self.module_name_path = configuration["module_name"][1]
+        self.limit_suite = configuration["limit_suite_testcases"]
+        self.limit_test = configuration["limit_test_lines"]
+        self.output_folder_path = configuration["output_folder_path"]
+        self.selection_type = configuration["selection"]
+        self.population = []
+        self.stats = {
+            "average fitness": [],
+            "best fitness": []
+        }
+        self.normalized_fitness = 1.0
+
+    def initialize_population(self):
+        for i in range(self.population_size):
+            test_suite = testsuite.TestSuite(self.limit_suite, self.limit_test,
+                                             (self.module_name, self.module_name_path), self.sut_info, i)
+            test_suite.generate_random_test_suite(self.output_folder_path)
+            self.population.append(test_suite)
+        return
+
     def selection(self):
-        return super().selection()
+        # if random.random() > 0.5:
+        if self.selection_type == "tournament":
+            '''
+            Tournament selection:
+            '''
+            if random.random() > 0.2:
 
-    def crossover(parent1,parent2):
+                P1 = self.population[int(
+                    random.random() * len(self.population)*0.2)]
+                return P1
+            else:
+
+                P1 = self.population[int(
+                    random.random() * len(self.population))]
+
+                return P1
+
+        elif self.selection_type == "roulette_wheel":
+            '''
+            Biased Roulette Wheel: not supported
+            '''
+            selector = random.random()
+            for testsuite in self.population:
+                if (1/testsuite.number_of_lines) < selector:
+                    P1 = testsuite
+                    self.population.remove(testsuite)
+            for testsuite in self.population:
+                if (1/testsuite.number_of_lines) < selector:
+                    P2 = testsuite
+            # self.population.append(P1)
+
+            if len(P1) >= len(P2):
+                return P1
+            else:
+                return P2
+
+    def crossover(self, parent1, parent2):
         alpha = random.random()
-        O1 = parent1[:int(alpha(len(parent1)))] + parent2[int((1-alpha)(len(parent2))):]
-        O2 = parent2[:int(alpha(len(parent2)))] + parent1[int((1-alpha)(len(parent1))):]
-        return O1,O2
+        # Copy parent's information
+        limit_suite = parent1.limit_suite
+        limit_test = parent1.limit_test
+        module = parent1.module
+        module_path = parent1.module_path
+        sut_info = parent1.sut_info
+        number = parent1.number
 
-    def mutate(offsprining):
-        if random.random()>(1/len(offsprining)):
-            si = offsprining.pop(int(len(offsprining)*random.random()))
-            '''
-            #TODO: find value of si and
-            # if possible find a way to replace si with the same type
-            '''
-        if random.random()>(1/len(offsprining)):
-            
-            ...
-        return offsprining
+        # Create child test suites
+        O1 = testsuite.TestSuite(
+            limit_suite, limit_test, (module, module_path), sut_info, number)
+        O2 = testsuite.TestSuite(
+            limit_suite, limit_test, (module, module_path), sut_info, number)
+        cut_off1 = int(alpha * (len(parent1)))
+        cut_off2 = int(alpha * (len(parent2)))
+        temp_list1 = parent1.test_cluster[:cut_off1] + \
+            parent2.test_cluster[cut_off2:]
+        temp_list2 = parent2.test_cluster[:cut_off2] + \
+            parent1.test_cluster[cut_off1:]
+        O1.test_cluster = temp_list1
+        O2.test_cluster = temp_list2
 
-    def crossover_individuals(self):
-        return super().crossover_individuals()
-    def mutate_individual(self):
-        return super().mutate_individual() 
-    def fitness_evaluation(self):
-        return int(20*random.random())
+        return O1, O2
+
+    def mutate(self, offspring: testsuite.TestSuite):
+
+        mutationType = {
+            0: "Modify",
+            1: "Add",
+            2: "Delete"
+        }
+
+        for testcase in offspring.test_cluster:
+            if len(testcase.statement_list) < 2:
+                continue
+            elif random.random() < (1 / len(offspring)):
+                mutation_type = mutationType[random.randint(0, 2)]
+                if (mutation_type == "Delete" or mutation_type == "Modify"):
+                    # print("Before: ", testcase.statement_list)
+                    statement_idx = random.randint(
+                        1, len(testcase.statement_description) - 1)
+                    statement = testcase.statement_description[statement_idx]
+                    if mutation_type == "Delete":
+                        self.delete_statement(statement, testcase)
+                        # print("After deletion: ", testcase.statement_list)
+                    else:
+                        self.mutate_statement(
+                            statement_idx, statement, testcase)
+
+                        # print("After modify: ", testcase.statement_list)
+                else:
+                    testcase.make_statement()
+                    # print("After add: ", testcase.statement_list)
+
+        return offspring
+
+    def mutate_statement(self, index, statement, testcase):
+        statement_type = type(statement).__name__
+        if statement_type == "PrimitiveStatement":
+            statement.generate_random_value()
+            statement.generate_statement()
+            testcase.statement_list[index] = statement.statement
+        elif statement_type == "ConstructorStatement" or statement_type == "FunctionStatement" or statement_type == "MethodStatement":
+            arg_list = statement.arg_list
+            mutate_list = []
+            for i, d in enumerate(testcase.statement_description):
+                if type(d).__name__ == "ImportStatement":
+                    continue
+                if d.statement_variable in arg_list:
+                    mutate_list.append((i, d))
+            for s in mutate_list:
+                self.mutate_statement(s[0], s[1], testcase)
+            statement.generate_statement()
+
+    def delete_statement(self, statement, testcase):
+        statement_kind = type(statement).__name__
+        statement_type = statement.statement_type
+        statement_variable = statement.statement_variable
+        occurences = []
+        replacements = []
+        index = testcase.statement_description.index(statement)
+
+        # If the statement to delete is the last one
+        if index == len(testcase.statement_description) - 1:
+            testcase.statement_list.remove(statement.statement)
+            testcase.statement_description.pop()
+            return
+        # Find occurences of the statement variable
+        for idx, st in enumerate(testcase.statement_description[index + 1:]):
+            if type(st).__name__ == "PrimitiveStatement":
+                continue
+
+            if type(st).__name__ == "MethodStatement" and st.obj == statement_variable and statement_variable not in st.arg_list:
+                occurences.append((idx + index + 1, [], st))
+
+            if statement_variable in st.arg_list:
+                v_idx = []
+                for i, arg in enumerate(st.arg_list):
+                    if arg == statement_variable:
+                        v_idx.append(i)
+                occurences.append((idx + index + 1, v_idx, st))
+
+        # Find replacements from before
+        for idx, st in enumerate(testcase.statement_description[:index]):
+            if type(st).__name__ == statement_kind and st.statement_type == statement_type:
+                replacements.append(st)
+
+        # print("Occurences: ", occurences)
+        # print("Replacements: ", replacements)
+
+        if len(replacements) > 0:
+            for idx, v_idx, st in occurences:
+                old_st = st.statement
+                if type(st).__name__ == "MethodStatement":
+                    replacement = random.choice(replacements)
+                    st.obj = replacement.statement_variable
+                for j in v_idx:
+                    replacement = random.choice(replacements)
+                    st.arg_list[j] = replacement.statement_variable
+                st.generate_statement()
+                i = testcase.statement_list.index(old_st)
+                testcase.statement_list[i] = st.statement
+        else:
+            for idx, v_idx, st in occurences:
+                self.delete_statement(st, testcase)
+        # print("to remove: ", statement.statement)
+        testcase.statement_list.remove(statement.statement)
+        testcase.statement_description.remove(statement)
+
+    def calculate_fitnesses(self, statistics):
+        all_fitnesses = []
+        for testsuit in self.population:
+            suite_fitness = testsuit.find_suite_coverage(
+                self.output_folder_path)
+            all_fitnesses.append(suite_fitness / self.normalized_fitness)
+
+        best = max(all_fitnesses)
+        ave = sum(all_fitnesses) / len(all_fitnesses)
+        statistics["average fitness"].append(ave)
+        statistics["best fitness"].append(best)
+
+    def clean_suite(self):
+        for testsuite in self.population:
+            for i in range(len(testsuite.test_cluster) - 1, -1, -1):
+                if len(testsuite.test_cluster[i].statement_list) < 2:
+                    testsuite.test_cluster.pop(i)
+
+        for testsuite in self.population[:]:
+            if len(testsuite) == 0:
+                self.population.remove(testsuite)
+
+    def reassign_suite_numbers(self):
+        for i in range(len(self.population)):
+            self.population[i].number = i
+
+    def initialize_coverage(self):
+        testcase = t.Testcase(
+            (self.module_name, self.module_name_path), self.sut_info, 0)
+        testcase.generate_random_testcase()
+        data, err = testcase.find_coverage(self.output_folder_path)
+        if data is not None:
+
+            if 'missing_lines' in data and 'summary' in data:
+                self.normalized_fitness = len(
+                    data['missing_lines']) / data['summary']['num_statements']
+                print("Missing lines: ", len(data['missing_lines']),
+                      "Total lines: ", data['summary']['num_statements'])
+                if self.normalized_fitness == 0:
+                    self.normalized_fitness = 1
+                print("Normalized coverage", self.normalized_fitness)
+
+    def run_random_search(self, epochs):
+        stats = {
+            "average fitness": [],
+            "best fitness": [],
+            "max": []
+        }
+        for e in range(epochs):
+            self.population = []
+
+            for i in range(self.population_size):
+                test_suite = testsuite.TestSuite(self.limit_suite, self.limit_test,
+                                                 (self.module_name, self.module_name_path), self.sut_info, i)
+                test_suite.generate_random_test_suite(self.output_folder_path)
+                self.population.append(test_suite)
+            self.calculate_fitnesses(stats)
+
+            if e == 0:
+                stats["max"].append(stats["best fitness"][-1])
+            else:
+                stats["max"].append(
+                    max(stats["best fitness"][-1], stats["max"][-1]))
+
+        return stats
 
     def run_ga(self, epochs):
-        current_population = self.initialize_population(self.config)
-        print(current_population[1][1][0])
-        fitness = dict()
-        for i in range(10):
-            fitness[self.fitness_evaluation()]=current_population[i]
-        print(fitness)
-        
+        self.initialize_population()
+        self.initialize_coverage()
+
         for i in range(epochs):
-            # Z = max(fitness, key=fitness.get())
-            # Z = [10, 24,56]
-            # while len(Z) != len(current_population):
-            #     P1 =  max(fitness, key=fitness.get())
-            #     del fitness[P1]
-            #     P2 =  max(fitness, key=fitness.get())
-            #     del fitness[P2]
-            #     O1, O2 = self.crossover(P1,P2)
-            #     O1, O2 = self.mutate(O1), self.mutate(O2)
-            #     fitness_parent = min(self.fitness_evaluation(P1), self.fitness_evaluation(P2))
-            #     finess_offspring = min(self.fitness_evaluation(O1), self.fitness_evaluation(O2))
-            #     length_parent = len(P1) + len(P2)
-            #     length_offspring = len(O1) + len(O2)
-            #     TB = ...
+            print(f"**************   Start of {i} epoch     ***********")
+            self.calculate_fitnesses(self.stats)
+            while len(self.population) <= 2*(self.population_size):
+                P1 = self.selection()
+                P2 = self.selection()
 
+                alpha = random.random()
+                gamma = random.random()
 
-                pass
-        return super().run_ga()
-    pass
+                while P1 == P2:
+                    P1 = self.selection()
+                # print(P1, P2)
+                P1 = copy.deepcopy(P1)
+                P2 = copy.deepcopy(P2)
+                # print(P1, P2)
+                if alpha < self.crossover_rate:
+                    O1, O2 = self.crossover(P1, P2)
+                else:
+                    O1, O2 = P1, P2
 
+                if gamma < self.mutation_rate:
+                    self.mutate(O1)
+                    self.mutate(O2)
 
-def triangle(x: int, y: int, z: int) -> str:
-    if x == y == z:
-        return "Equilateral triangle"
-    elif x == y or y == z or x == z:
-        return "Isosceles triangle"
-    else:
-        return "Scalene triangle"
+                # random test generation
+                if len(O1) < self.limit_suite:
+                    delta = random.random()
+                    if delta < self.random_testcase_rate:
+                        O1.generate_random_testcase(self.output_folder_path)
+                if len(O2) < self.limit_suite:
+                    delta = random.random()
+                    if delta < self.random_testcase_rate:
+                        O2.generate_random_testcase(self.output_folder_path)
 
-triangle.ftype = [[5,6,3], {"x":int, "y": int, "z":int}, [34,45,235]]
-triangle.function_name = "traingle"
-triangle.function = triangle
-triangle.name = "traingle"
-a = GA(triangle)
-# b = a.generate_population(triangle)
-a.run_ga(1)
-# print(b)
+                O1.find_suite_coverage(self.output_folder_path)
+                O2.find_suite_coverage(self.output_folder_path)
+                self.population.append(O1)
+                self.population.append(O1)
+
+            self.population.sort(
+                key=lambda testsuit: testsuit.suite_fitness, reverse=True)
+            self.population = self.population[:self.population_size]
+
+            # cleaning
+            self.clean_suite()
+            self.reassign_suite_numbers()
+
+            # reassign
+            while(len(self.population) < self.population_size):
+                test_suite = testsuite.TestSuite(self.limit_suite, self.limit_test,
+                                                 (self.module_name, self.module_name_path), self.sut_info, len(self.population_size))
+                test_suite.generate_random_test_suite(self.output_folder_path)
+                self.population.append(test_suite)
+
+        print("Stats: ", self.stats)
+        return self.population

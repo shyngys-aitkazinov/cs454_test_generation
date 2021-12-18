@@ -1,7 +1,7 @@
 from typing import Optional
 import inspect
 import types
-
+import os
 PRIMITIVES = [int, str, bytes, bool, float, complex]
 COLLECTIONS = [list, set, tuple, dict]
 
@@ -33,3 +33,15 @@ def get_class_that_defined_method(method: object) -> Optional[object]:
         if isinstance(cls, type):
             return cls
     return getattr(method, "__objclass__", None)
+
+
+def relative_path_from_module_name(module_name):
+    """
+
+    :param module_name: module_name written with dots e.g. arithmetics.complex
+    :return: path
+    """
+
+    splitted_version = module_name.strip().split('.')
+    return str(os.path.join(*splitted_version))
+
