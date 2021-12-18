@@ -226,13 +226,13 @@ class Testcase(AbstractTestcase):
 
         f.write("import coverage\n")
         # uncomment if timeout available
-        # f.write("import signal\n")
-        # f.write("def handler(signum, frame):\n")
-        # f.write("\tprint('Timeout of the test case')\n")
-        # f.write("\traise Exception('end of time')\n")
-        #
-        # f.write("signal.signal(signal.SIGALRM, handler)\n")
-        # f.write(f"signal.alarm({self.timeout_time})\n")
+        f.write("import signal\n")
+        f.write("def handler(signum, frame):\n")
+        f.write("\tprint('Timeout of the test case')\n")
+        f.write("\traise Exception('end of time')\n")
+
+        f.write("signal.signal(signal.SIGALRM, handler)\n")
+        f.write(f"signal.alarm({self.timeout_time})\n")
 
         f.write("cov = coverage.Coverage() \n")
         f.write("cov.set_option('run:branch', True) \n")

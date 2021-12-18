@@ -188,30 +188,28 @@ class GA():
                     statement_idx = random.randint(
                         1, len(testcase.statement_description) - 1)
                     statement = testcase.statement_description[statement_idx]
-                    # if (mutation_type == "Delete"):
-                    self.delete_statement(
-                        statement_idx, statement, testcase)
-                    # else:
-                    #     self.mutate_statement(
-                    #         statement_idx, statement, testcase)
+                    if mutation_type == "Delete":
+                        self.delete_statement(
+                            statement_idx, statement, testcase)
+                        print("After deletion: ", testcase.statement_list)
+                    else:
+                        self.mutate_statement(
+                            statement_idx, statement, testcase)
 
-                    print("After: ", testcase.statement_list)
+                        print("After modify: ", testcase.statement_list)
                 else:
                     testcase.make_statement()
-                    print("After: ", testcase.statement_list)
+                    print("After add: ", testcase.statement_list)
 
         return offspring
 
     # def delete_statement(self, statement, testcase):
 
     def mutate_statement(self, index, statement, testcase):
-        print("Statement: ", statement.statement)
         statement_type = type(statement).__name__
         if statement_type == "PrimitiveStatement":
             statement.generate_random_value()
             statement.generate_statement()
-            print('Statement_orimitive: ', statement.statement)
-            print('Testcase: ', testcase.statement_list)
             testcase.statement_list[index] = statement.statement
         elif statement_type == "ConstructorStatement" or statement_type == "FunctionStatement" or statement_type == "MethodStatement":
             arg_list = statement.arg_list
@@ -251,7 +249,6 @@ class GA():
     #     return offspring
 
     def delete_statement(self, index, statement, testcase):
-        print("Delete statement: ", statement.statement)
         statement_kind = type(statement).__name__
         statement_type = statement.statement_type
         statement_variable = statement.statement_variable
@@ -267,12 +264,16 @@ class GA():
         for idx, st in enumerate(testcase.statement_description[index + 1:]):
             if type(st).__name__ == "PrimitiveStatement":
                 continue
-            elif statement_variable in st.arg_list:
+            elif type(st).__name__ == "MethodStatement" and st.obj == statement_variable:
+                occurences.append((idx, [], st))
+
+            if statement_variable in st.arg_list:
                 v_idx = []
                 for i, arg in enumerate(st.arg_list):
                     if arg == statement_variable:
                         v_idx.append(i)
                 occurences.append((idx, v_idx, st))
+
         # Find replacements from before
         for idx, st in enumerate(testcase.statement_description[:index]):
             if type(st).__name__ == statement_kind and st.statement_type == statement_type:
@@ -280,49 +281,22 @@ class GA():
 
         if len(replacements) > 0:
             for idx, v_idx, st in occurences:
+                old_st = st.statement
+                if len(v_idx) == 0 and type(st).__name__ == "MethodStatement":
+                    replacement = random.choice(replacements)
+                    st.obj = replacement.statement_variable
                 for j in v_idx:
                     replacement = random.choice(replacements)
                     st.arg_list[j] = replacement.statement_variable
                 st.generate_statement()
-                testcase.statement_list[idx] = st.statement
+                i = testcase.statement_list.index(old_st)
+                testcase.statement_list[old_st] = st.statement
         else:
             for idx, v_idx, st in occurences:
-                # st_to_remove = st.statement
-                # testcase.statement_description.remove(st)
-                # testcase.statement_list.remove(st_to_remove)
                 self.delete_statement(idx, st, testcase)
 
         testcase.statement_list.remove(statement.statement)
         testcase.statement_description.remove(statement)
-
-        # elif statement_type == "ConstructorStatement" or statement_type == "FunctionStatement" or statement_type == "MethodStatement":
-        #     arg_list = statement.arg_list
-        #     mutate_list = []
-        #     for i, d in enumerate(testcase.statement_description):
-        #         if type(d).__name__ == "ImportStatement":
-        #             continue
-        #         if d.statement_variable in arg_list:
-        #             mutate_list.append((i, d))
-        #     for s in mutate_list:
-        #         self.mutate_statement(s[0], s[1], testcase)
-
-        # if statement_type == "PrimitiveStatement":
-        #     statement.generate_random_value()
-        #     statement.generate_statement()
-        #     print('Statement_orimitive: ', statement.statement)
-        #     print('Testcase: ', testcase.statement_list)
-        #     testcase.statement_list[index] = statement.statement
-        # elif statement_type == "ConstructorStatement" or statement_type == "FunctionStatement" or statement_type == "MethodStatement":
-        #     arg_list = statement.arg_list
-        #     mutate_list = []
-        #     for i, d in enumerate(testcase.statement_description):
-        #         if type(d).__name__ == "ImportStatement":
-        #             continue
-        #         if d.statement_variable in arg_list:
-        #             mutate_list.append((i, d))
-        #     for s in mutate_list:
-        #         self.mutate_statement(s[0], s[1], testcase)
-        #     statement.generate_statement()
 
     def calculate_fitnesses(self):
         current_best = []
@@ -370,6 +344,7 @@ class GA():
             current_best.sort(key=lambda testsuit: testsuit.number_of_lines)
             current_best = current_best[:self.population_size]
             self.population = self.population[:self.population_size]
+            return
             '''
             #TODO: I will add stop condition if
                 100 coverage reached 
