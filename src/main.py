@@ -37,7 +37,7 @@ if __name__ == "__main__":
                       help="set mutation rate", default=0.5)
     parser.add_option("-t", "--target_module", action="store", type="string", dest="module_name",
                       help="set target module to test using . to specify the relative path, e.g arithmetics.complex",
-                      default="obj_example")
+                      default="arithmetics.complex")
     parser.add_option("-c", "--crossover_rate", action="store", type="float", dest="crossover_rate",
                       help="set crossover rate", default=0.5)
 
@@ -55,6 +55,8 @@ if __name__ == "__main__":
 
     # output path
     output_folder_path = str(Path().parent.absolute() / "outputs")
+    if not os.path.exists(output_folder_path):
+        os.makedirs(output_folder_path)
 
     cluster = TestCluster()
 
