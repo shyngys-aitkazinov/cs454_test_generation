@@ -20,8 +20,6 @@ class TestSuite(object):
         self.number_of_lines = 0
         self.suite_fitness = 0
 
-    # def delete_testuite(self):
-
     def __len__(self):
         return len(self.test_cluster)
 
@@ -38,7 +36,6 @@ class TestSuite(object):
         # print(self.test_cluster)
         self.write_test_suite(output_folder_path)
         return
-
 
     def generate_random_testcase(self, output_folder_path='.'):
 
@@ -83,16 +80,18 @@ class TestSuite(object):
                 output_folder_path)
 
             total_number = max(total_number_of_lines, total_number)
-            print(f">>>>Testcase {test_number}: percent covered (fitness) {fitness}, module lines count:{total_number}")
+            print(
+                f">>>>Testcase {test_number}: percent covered (fitness) {fitness}, module lines count:{total_number}")
             if fitness > 0:
                 self.suite_coverage = list(
                     set(self.suite_coverage) | set(executed_lines))
+            test_number += 1
         self.suite_coverage.sort()
         self.number_of_lines = len(self.suite_coverage)
-
+        print(self.suite_coverage)
         # calculate suite fitness
         if total_number > 0:
-            self.suite_fitness =  len(self.suite_coverage) / total_number
+            self.suite_fitness = len(self.suite_coverage) / total_number
         else:
             self.suite_fitness = 0
 

@@ -276,10 +276,6 @@ class Testcase(AbstractTestcase):
                 data = json.load(report)
 
             os.remove(path)
-            # print(data)
-
-            # print("Percent covered",
-            #       data['files'][module_path]['summary']['percent_covered'])
 
             os.remove('coverage.json')
 
