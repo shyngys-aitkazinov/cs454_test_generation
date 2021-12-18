@@ -33,7 +33,7 @@ class MinHeap:
             else:
                 return (i * 2) + 1
  
-    def delete_min(self) Optional[int]:
+    def delete_min(self) -> Optional[int]:
         if len(self.heap_list) == 1:
             return None
         root = self.heap_list[1]
@@ -42,3 +42,12 @@ class MinHeap:
         self.current_size -= 1
         self.sift_down(1)
         return root
+
+def init_heap(name: int) -> MinHeap:
+    return name = MinHeap
+
+def insert_from_list(list: list, name: MinHeap) -> None:
+    for num in list:
+        name.insert(num)
+
+
