@@ -159,7 +159,6 @@ class GA():
             limit_suite, limit_test, (module, module_path), sut_info, number)
         O2 = testsuite.TestSuite(
             limit_suite, limit_test, (module, module_path), sut_info, number)
-
         cut_off1 = int(alpha * (len(parent1)))
         cut_off2 = int(alpha * (len(parent2)))
         temp_list1 = parent1.test_cluster[:cut_off1] + \
@@ -244,7 +243,7 @@ class GA():
                         print(t)
                     O1, O2 = self.crossover(P1, P2)
                     print(O1.test_cluster)
-                    print(P2.test_cluster)
+                    print(O2.test_cluster)
                     print("O1: ", type(O1).__name__)
                     return
                 else:
