@@ -9,6 +9,7 @@ from parse import *
 from inspect import *
 from testcase import *
 import testsuite
+import copy
 
 
 class AbstractGA(ABC):
@@ -120,13 +121,13 @@ class GA():
                 P2 = self.population[int(
                     random.random() * len(self.population))]
             # print(type(P1.number_of_lines).__name__, type(P2).__name__)
-            if len(P1) >= len(P2):
+            if len(P1) < len(P2):
                 return P1
             else:
                 return P2
         elif self.selection_type == "roulette_wheel":
             '''
-            Biased Roulette Wheel
+            Biased Roulette Wheel: not supported
             '''
             selector = random.random()
             for testsuite in self.population:
@@ -159,10 +160,14 @@ class GA():
         O2 = testsuite.TestSuite(
             limit_suite, limit_test, (module, module_path), sut_info, number)
 
-        O1.test_cluster = parent1.test_cluster[:round(alpha * (len(parent1)))] + \
-            parent2.test_cluster[round((1 - alpha) * (len(parent2))):]
-        O2.test_cluster = parent2.test_cluster[:round(alpha * (len(parent2)))] + \
-            parent1.test_cluster[round((1 - alpha) * (len(parent1))):]
+        cut_off1 = int(alpha * (len(parent1)))
+        cut_off2 = int(alpha * (len(parent2)))
+        temp_list1 = parent1.test_cluster[:cut_off1] + \
+            parent2.test_cluster[cut_off2:]
+        temp_list2 = parent2.test_cluster[:cut_off2] + \
+            parent1.test_cluster[cut_off1:]
+        O1.test_cluster = temp_list1
+        O2.test_cluster = temp_list2
 
         return O1, O2
 
@@ -222,13 +227,26 @@ class GA():
                 P1 = self.selection()
                 P2 = self.selection()
                 print("P1: ", type(P1).__name__)
-                alpha = random.random()
-                gamma = random.random()
+                alpha = 0
+                gamma = 0
                 while P1 == P2:
                     P1 = self.selection()
+                print(P1, P2)
+                P1 = copy.deepcopy(P1)
+                P2 = copy.deepcopy(P2)
+                print(P1, P2)
                 if alpha < self.crossover_rate:
+                    print("P1")
+                    for t in P1.test_cluster:
+                        print(t)
+                    print("P2")
+                    for t in P2.test_cluster:
+                        print(t)
                     O1, O2 = self.crossover(P1, P2)
+                    print(O1.test_cluster)
+                    print(P2.test_cluster)
                     print("O1: ", type(O1).__name__)
+                    return
                 else:
                     O1, O2 = P1, P2
                 if gamma < self.mutation_rate:
