@@ -4,7 +4,7 @@ class BinaryTree:
       self.right = None
       self.data = data
 
-   def insert(self, data) -> None:
+   def insert(self, data: int) -> None:
       if self.data:
         if data < self.data:
             if self.left is None:
@@ -28,9 +28,10 @@ class BinaryTree:
 
 def tree(name: str) ->BinaryTree:
     name = BinaryTree(12)
-    root.insert(6)
-    root.insert(14)
-    root.insert(3)
-    root.PrintTree()
+    name.insert(6)
+    name.insert(14)
+
+    name.insert(3)
+    name.PrintTree()
 
     return name

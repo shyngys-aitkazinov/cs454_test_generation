@@ -6,18 +6,18 @@ class MinHeap:
         self.heap_list = [0]
         self.current_size = 0
  
-    def sift_up(self, i: int ):
+    def sift_up(self, i: int ) -> None:
         while i // 2 > 0:
             if self.heap_list[i] < self.heap_list[i // 2]:
                 self.heap_list[i], self.heap_list[i // 2] = self.heap_list[i // 2], self.heap_list[i]
             i = i // 2
  
-    def insert(self, k: int):
+    def insert(self, k: int)-> None:
         self.heap_list.append(k)
         self.current_size += 1
         self.sift_up(self.current_size)
  
-    def sift_down(self, i: int):
+    def sift_down(self, i: int) -> None:
         while (i * 2) <= self.current_size:
             mc = self.min_child(i)
             if self.heap_list[i] > self.heap_list[mc]:
