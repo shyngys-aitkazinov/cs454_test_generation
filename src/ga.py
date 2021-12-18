@@ -179,35 +179,50 @@ class GA():
         }
 
         for testcase in offspring.test_cluster:
-            if random.random() < (1 / len(offspring)):
-                mutation_type = mutationType[random.randint(0, 2)]
-                if (mutation_type == "Delete" or mutation_type == "Modify"):
-                    statement_idx = random.randint(
-                        1, len(testcase.statement_description) - 1)
-                    statement = testcase.statement_description[statement_idx]
-                    if (mutation_type == "Delete"):
-                        pass
+            if len(testcase.statement_list) < 2:
+                continue
+            elif random.random() < (1 / len(offspring)):
+                # mutation_type = mutationType[random.randint(0, 2)]
+                # if (mutation_type == "Delete" or mutation_type == "Modify"):
+                print("Before: ", testcase.statement_list)
+                 statement_idx = random.randint(
+                      1, len(testcase.statement_description) - 1)
+                  statement = testcase.statement_description[statement_idx]
+                   if (mutation_type == "Delete"):
+                        self.delete_statement(statement, test)
                     else:
-                        self.mutate_statement(statement)
-                        testcase.statement_list[statement_idx] = statement.statement
-                        # elif statement_type == "ConstructorStatement":
+                        self.mutate_statement(
+                            statement_idx, statement, testcase)
 
-                        # elif statement_type == "FunctionStatement":
-                        #     arg_statement_list = []
-                        #     for i in testcase.statement_description:
-                        #         if i.statement_variable in statement.arg_list:
-                        #             typ = i.statement_type
+                    print("After: ", testcase.statement_list)
                 else:
-                    testcase.make_statement()
+                testcase.make_statement()
+                print("After: ", testcase.statement_list)
 
         return offspring
 
-    def mutate_statement(self, statement):
+    # def delete_statement(self, statement, testcase):
+
+    def mutate_statement(self, index, statement, testcase):
+        print("Statement: ", statement.statement)
         statement_type = type(statement).__name__
         if statement_type == "PrimitiveStatement":
             statement.generate_random_value()
             statement.generate_statement()
-        # elif statement_type == "ConstructorStatement":
+            print('Statement_orimitive: ', statement.statement)
+            print('Testcase: ', testcase.statement_list)
+            testcase.statement_list[index] = statement.statement
+        elif statement_type == "ConstructorStatement" or statement_type == "FunctionStatement" or statement_type == "MethodStatement":
+            arg_list = statement.arg_list
+            mutate_list = []
+            for i, d in enumerate(testcase.statement_description):
+                if type(d).__name__ == "ImportStatement":
+                    continue
+                if d.statement_variable in arg_list:
+                    mutate_list.append((i, d))
+            for s in mutate_list:
+                self.mutate_statement(s[0], s[1], testcase)
+            statement.generate_statement()
 
     def calculate_fitnesses(self):
         current_best = []
@@ -220,15 +235,15 @@ class GA():
 
     def run_ga(self, epochs):
         self.initialize_population()
-        # print(self.population[0].test_cluster[0].fitness)
         self.calculate_fitnesses()
         current_best = []
-        # print(testsuit.suite_coverage)
         for i in range(epochs):
 
             while len(self.population) <= 2*(self.population_size):
-                P1 = self.selection()
-                P2 = self.selection()
+                p1 = self.selection()
+                p2 = self.selection()
+                P1 = copy.deepcopy(p1)
+                P2 = copy.deepcopy(p2)
                 print("P1: ", type(P1).__name__)
                 alpha = 0
                 gamma = 0
@@ -242,6 +257,7 @@ class GA():
                     O1, O2 = self.crossover(P1, P2)
                 else:
                     O1, O2 = P1, P2
+
                 if gamma < self.mutation_rate:
                     self.mutate(O1)
                     self.mutate(O2)
