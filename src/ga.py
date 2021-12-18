@@ -92,6 +92,7 @@ class GA():
         self.population_size = configuration["pop_size"]
         self.mutation_rate = configuration["mutation_rate"]
         self.crossover_rate = configuration["crossover_rate"]
+        self.random_testcase_rate = configuration["random_testcase_rate"]
         self.module_name = configuration["module_name"][0]
         self.module_name_path = configuration["module_name"][1]
         self.limit_suite = configuration["limit_suite_testcases"]
@@ -99,6 +100,10 @@ class GA():
         self.output_folder_path = configuration["output_folder_path"]
         self.selection_type = configuration["selection"]
         self.population = []
+        self.stats = {
+            "average fitness": [],
+            "best fitness": []
+        }
 
     def initialize_population(self):
         for i in range(self.population_size):
@@ -201,8 +206,6 @@ class GA():
 
         return offspring
 
-    # def delete_statement(self, statement, testcase):
-
     def mutate_statement(self, index, statement, testcase):
         print("Statement: ", statement.statement)
         statement_type = type(statement).__name__
@@ -224,91 +227,48 @@ class GA():
                 self.mutate_statement(s[0], s[1], testcase)
             statement.generate_statement()
 
-    def  find_occurrence(self, statement_variable, testcase):
-
-        for i in range(len(testcase.statement_description)):
-
-
-        if len(testcase.statement_list) < 2:
-            continue
-        elif random.random() < (1 / len(offspring)):
-            mutation_type = mutationType[random.randint(0, 2)]
-            if (mutation_type == "Delete" or mutation_type == "Modify"):
-                print("Before: ", testcase.statement_list)
-                statement_idx = random.randint(
-                    1, len(testcase.statement_description) - 1)
-                statement = testcase.statement_description[statement_idx]
-                if (mutation_type == "Delete"):
-                    self.delete_statement(statement_idx, statement, testcase)
-                else:
-                    self.mutate_statement(
-                        statement_idx, statement, testcase)
-
-                print("After: ", testcase.statement_list)
-            else:
-                testcase.make_statement()
-                print("After: ", testcase.statement_list)
-
-        return offspring
-
-
-    def delete_statement(self, index, statement, testcase):
-        print("Statement: ", statement.statement)
-        statement_type = type(statement).__name__
-        if statement.statement_variable is None or find_occurrence
-
-
-
-        # elif statement_type == "ConstructorStatement" or statement_type == "FunctionStatement" or statement_type == "MethodStatement":
-        #     arg_list = statement.arg_list
-        #     mutate_list = []
-        #     for i, d in enumerate(testcase.statement_description):
-        #         if type(d).__name__ == "ImportStatement":
-        #             continue
-        #         if d.statement_variable in arg_list:
-        #             mutate_list.append((i, d))
-        #     for s in mutate_list:
-        #         self.mutate_statement(s[0], s[1], testcase)
-
-        if statement_type == "PrimitiveStatement":
-            statement.generate_random_value()
-            statement.generate_statement()
-            print('Statement_orimitive: ', statement.statement)
-            print('Testcase: ', testcase.statement_list)
-            testcase.statement_list[index] = statement.statement
-        elif statement_type == "ConstructorStatement" or statement_type == "FunctionStatement" or statement_type == "MethodStatement":
-            arg_list = statement.arg_list
-            mutate_list = []
-            for i, d in enumerate(testcase.statement_description):
-                if type(d).__name__ == "ImportStatement":
-                    continue
-                if d.statement_variable in arg_list:
-                    mutate_list.append((i, d))
-            for s in mutate_list:
-                self.mutate_statement(s[0], s[1], testcase)
-            statement.generate_statement()
 
     def calculate_fitnesses(self):
-        current_best = []
+        all_fitnesses = []
         for testsuit in self.population:
-            testsuit.find_suite_coverage(self.output_folder_path)
+            suite_fitness = testsuit.find_suite_coverage(self.output_folder_path)
+            all_fitnesses.append(suite_fitness)
+
+        best = max(all_fitnesses)
+        ave = sum(all_fitnesses) / len(all_fitnesses)
+        self.stats["average fitness"].append(ave)
+        self.stats["best fitness"].append(best)
 
     def clean_suite(self):
-        pass
+        for testsuite in self.population:
+            for i in range(len(testsuite.test_cluster) -1, -1, -1):
+                if len(testsuite.test_cluster[i].statement_list) < 2:
+                    testsuite.test_cluster.pop(i)
+
+        for testsuite in self.population[:]:
+            if len(testsuite) == 0:
+                self.population.remove(testsuite)
+
+
+    def reassign_suite_numbers(self):
+        for i in range(len(self.population)):
+            self.population[i].number = i
+
+
 
 
     def run_ga(self, epochs):
         self.initialize_population()
-        self.calculate_fitnesses()
-        current_best = []
-        for i in range(epochs):
 
+        for i in range(epochs):
+            self.calculate_fitnesses()
             while len(self.population) <= 2*(self.population_size):
                 P1 = self.selection()
                 P2 = self.selection()
                 print("P1: ", type(P1).__name__)
                 alpha = 0
                 gamma = 0
+
                 while P1 == P2:
                     P1 = self.selection()
                 print(P1, P2)
@@ -323,21 +283,42 @@ class GA():
                 if gamma < self.mutation_rate:
                     self.mutate(O1)
                     self.mutate(O2)
+
+                # random test generation
+                if len(O1) < self.limit_suite:
+                    delta = 0
+                    if delta < self.random_testcase_rate:
+                        O1.generate_random_testcase(self.output_folder_path)
+                if len(O2) < self.limit_suite:
+                    delta = 0
+                    if delta < self.random_testcase_rate:
+                        O2.generate_random_testcase(self.output_folder_path)
+
                 O1.find_suite_coverage(self.output_folder_path)
                 O2.find_suite_coverage(self.output_folder_path)
                 self.population.append(O1)
                 self.population.append(O1)
 
-            print("Population: ", self.population)
-            self.population.sort(key=lambda testsuit: testsuit.number_of_lines)
-            for i in range(self.population_size):
-                current_best.append(self.population[i])
-            current_best.sort(key=lambda testsuit: testsuit.number_of_lines)
-            current_best = current_best[:self.population_size]
+
+            self.population.sort(key=lambda testsuit: testsuit.suite_fitness, reverse=True)
             self.population = self.population[:self.population_size]
+
+            # cleaning
+            self.clean_suite()
+            self.reassign_suite_numbers()
+
+            # reassign
+            while(len(self.population) < self.population_size):
+                test_suite = testsuite.TestSuite(self.limit_suite, self.limit_test,
+                                                 (self.module_name, self.module_name_path), self.sut_info, len(self.population_size))
+                test_suite.generate_random_test_suite(self.output_folder_path)
+                self.population.append(test_suite)
+
             '''
             #TODO: I will add stop condition if
                 100 coverage reached 
             '''
 
         return
+
+
