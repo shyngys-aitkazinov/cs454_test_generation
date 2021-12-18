@@ -32,7 +32,7 @@ if __name__ == "__main__":
                       default=5, help="size of population")
     parser.add_option("-s", "--selection",
                       action="store", type="string", dest="selection_type", default="tournament",
-                      help="selection type: Tournament, Roulette Wheel")
+                      help="selection type: tournament")
     parser.add_option("-m", "--mutation_rate", action="store", type="float", dest="mutation_rate",
                       help="set mutation rate", default=0.5)
     parser.add_option("-t", "--target_module", action="store", type="string", dest="module_name",

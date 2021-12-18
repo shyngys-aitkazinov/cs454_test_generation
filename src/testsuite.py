@@ -18,6 +18,7 @@ class TestSuite(object):
         self.number = number
         # number of lines covered by the testsuite
         self.number_of_lines = 0
+        self.suite_fitness = 0
 
     # def delete_testuite(self):
 
@@ -65,20 +66,27 @@ class TestSuite(object):
         """
         total_number = 0
         self.suite_coverage = []
-
+        print(f">>Find test suite {self.number} coverage")
+        test_number = 0
         for test in self.test_cluster:
+
             fitness, executed_lines, total_number_of_lines = test.find_fitness(
                 output_folder_path)
+
             total_number = max(total_number_of_lines, total_number)
+            print(f">>>>Testcase {test_number}: percent covered (fitness) {fitness}, module lines count:{total_number}")
             if fitness > 0:
                 self.suite_coverage = list(
                     set(self.suite_coverage) | set(executed_lines))
         self.suite_coverage.sort()
         self.number_of_lines = len(self.suite_coverage)
 
+        # calculate suite fitness
         if total_number > 0:
-            print("Suite coverage:", len(self.suite_coverage) / total_number)
-            return len(self.suite_coverage) / total_number
-        print("Suite coverage:", len(self.suite_coverage))
+            self.suite_fitness =  len(self.suite_coverage) / total_number
+        else:
+            self.suite_fitness = 0
+
+        print(f">>Test suite {self.number} coverage: {self.suite_fitness}")
 
         return len(self.suite_coverage)
