@@ -93,6 +93,7 @@ class GA():
         self.mutation_rate = configuration["mutation_rate"]
         self.crossover_rate = configuration["crossover_rate"]
         self.random_testcase_rate = configuration["random_testcase_rate"]
+
         self.module_name = configuration["module_name"][0]
         self.module_name_path = configuration["module_name"][1]
         self.limit_suite = configuration["limit_suite_testcases"]
@@ -319,6 +320,4 @@ class GA():
                 100 coverage reached 
             '''
 
-        return
-
-
+        return current_best
