@@ -43,9 +43,5 @@ class Person:
         else:
             return self.name
 
-if __name__ == '__main__':
-    person = Person("Asmir", 69, "banana", "girls")
-    print(person.allowed_to_drink("Kr"))
-    print(person.calculate_lifespan())
-    print(person.introduce_self())
-    
+def who_is_older(Person1: Person, Person2: Person) -> Person:
+    return max(Person1.age, Person2.age)
