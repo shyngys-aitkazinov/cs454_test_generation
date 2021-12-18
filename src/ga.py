@@ -320,4 +320,4 @@ class GA():
                 100 coverage reached 
             '''
 
-        return current_best
+        return self.population
