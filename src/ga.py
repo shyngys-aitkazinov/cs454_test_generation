@@ -162,7 +162,6 @@ class GA():
             2: "Delete"
         }
 
-        print("Offspring type: ", type(offspring).__name__)
 
         for testcase in offspring.test_cluster:
             if random.random() < (1 / len(offspring)):
