@@ -9,6 +9,7 @@ from parse import *
 from inspect import *
 from testcase import *
 import testsuite
+import copy
 
 
 class AbstractGA(ABC):
@@ -119,11 +120,14 @@ class GA():
             while P1 == P2:
                 P2 = self.population[int(
                     random.random() * len(self.population))]
+
             if type(P1) == list or type(P2) == list:
                 while type(P1) == list or type(P2) == list:
                     P1 = self.population[int(random.random() * len(self.population))]
                     P2 = self.population[int(random.random() * len(self.population))]
-            # print()
+        
+            if len(P1) < len(P2):
+                return P1
             else:
                 if P1.number_of_lines >= P2.number_of_lines:
                     return P1
@@ -131,7 +135,7 @@ class GA():
                     return P2
         elif self.selection_type == "roulette_wheel":
             '''
-            Biased Roulette Wheel
+            Biased Roulette Wheel: not supported
             '''
             selector = random.random()
             for testsuite in self.population:
@@ -141,25 +145,40 @@ class GA():
             for testsuite in self.population:
                 if (1/testsuite.number_of_lines) < selector:
                     P2 = testsuite
-            self.population.append(P1)
+            # self.population.append(P1)
 
-            if P1.number_of_lines >= P2.number_of_lines:
+            if len(P1) >= len(P2):
                 return P1
             else:
                 return P2
 
     def crossover(self, parent1, parent2):
-        '''
-        Needs to be updated
-        '''
         alpha = random.random()
-        O1 = parent1.test_cluster[:round(alpha * (len(parent1)))] + \
-            parent2.test_cluster[round((1 - alpha) * (len(parent2))):]
-        O2 = parent2.test_cluster[:round(alpha * (len(parent2)))] + \
-            parent1.test_cluster[round((1 - alpha) * (len(parent1))):]
+        # Copy parent's information
+        limit_suite = parent1.limit_suite
+        limit_test = parent1.limit_test
+        module = parent1.module
+        module_path = parent1.module_path
+        sut_info = parent1.sut_info
+        number = parent1.number
+
+        # Create child test suites
+        O1 = testsuite.TestSuite(
+            limit_suite, limit_test, (module, module_path), sut_info, number)
+        O2 = testsuite.TestSuite(
+            limit_suite, limit_test, (module, module_path), sut_info, number)
+        cut_off1 = int(alpha * (len(parent1)))
+        cut_off2 = int(alpha * (len(parent2)))
+        temp_list1 = parent1.test_cluster[:cut_off1] + \
+            parent2.test_cluster[cut_off2:]
+        temp_list2 = parent2.test_cluster[:cut_off2] + \
+            parent1.test_cluster[cut_off1:]
+        O1.test_cluster = temp_list1
+        O2.test_cluster = temp_list2
+
         return O1, O2
 
-    def mutate(self, offspring):
+    def mutate(self, offspring: testsuite.TestSuite):
 
         mutationType = {
             0: "Modify",
@@ -167,68 +186,156 @@ class GA():
             2: "Delete"
         }
 
-        print("Offspring type: ", type(offspring).__name__)
-
         for testcase in offspring.test_cluster:
-            if random.random() < (1 / len(offspring)):
+            if len(testcase.statement_list) < 2:
+                continue
+            elif random.random() < (1 / len(offspring)):
                 mutation_type = mutationType[random.randint(0, 2)]
                 if (mutation_type == "Delete" or mutation_type == "Modify"):
+                    print("Before: ", testcase.statement_list)
                     statement_idx = random.randint(
                         1, len(testcase.statement_description) - 1)
                     statement = testcase.statement_description[statement_idx]
                     if (mutation_type == "Delete"):
-                        pass
+                        self.delete_statement(statement_idx, statement, testcase)
                     else:
-                        self.mutate_statement(statement)
-                        testcase.statement_list[statement_idx] = statement.statement
-                        # elif statement_type == "ConstructorStatement":
+                        self.mutate_statement(
+                            statement_idx, statement, testcase)
 
-                        # elif statement_type == "FunctionStatement":
-                        #     arg_statement_list = []
-                        #     for i in testcase.statement_description:
-                        #         if i.statement_variable in statement.arg_list:
-                        #             typ = i.statement_type
+                    print("After: ", testcase.statement_list)
                 else:
                     testcase.make_statement()
+                    print("After: ", testcase.statement_list)
 
         return offspring
 
-    def mutate_statement(self, statement):
+    # def delete_statement(self, statement, testcase):
+
+    def mutate_statement(self, index, statement, testcase):
+        print("Statement: ", statement.statement)
         statement_type = type(statement).__name__
         if statement_type == "PrimitiveStatement":
             statement.generate_random_value()
             statement.generate_statement()
-        # elif statement_type == "ConstructorStatement":
+            print('Statement_orimitive: ', statement.statement)
+            print('Testcase: ', testcase.statement_list)
+            testcase.statement_list[index] = statement.statement
+        elif statement_type == "ConstructorStatement" or statement_type == "FunctionStatement" or statement_type == "MethodStatement":
+            arg_list = statement.arg_list
+            mutate_list = []
+            for i, d in enumerate(testcase.statement_description):
+                if type(d).__name__ == "ImportStatement":
+                    continue
+                if d.statement_variable in arg_list:
+                    mutate_list.append((i, d))
+            for s in mutate_list:
+                self.mutate_statement(s[0], s[1], testcase)
+            statement.generate_statement()
+
+    def  find_occurrence(self, statement_variable, testcase):
+
+        for i in range(len(testcase.statement_description)):
+
+
+        if len(testcase.statement_list) < 2:
+            continue
+        elif random.random() < (1 / len(offspring)):
+            mutation_type = mutationType[random.randint(0, 2)]
+            if (mutation_type == "Delete" or mutation_type == "Modify"):
+                print("Before: ", testcase.statement_list)
+                statement_idx = random.randint(
+                    1, len(testcase.statement_description) - 1)
+                statement = testcase.statement_description[statement_idx]
+                if (mutation_type == "Delete"):
+                    self.delete_statement(statement_idx, statement, testcase)
+                else:
+                    self.mutate_statement(
+                        statement_idx, statement, testcase)
+
+                print("After: ", testcase.statement_list)
+            else:
+                testcase.make_statement()
+                print("After: ", testcase.statement_list)
+
+        return offspring
+
+
+    def delete_statement(self, index, statement, testcase):
+        print("Statement: ", statement.statement)
+        statement_type = type(statement).__name__
+        if statement.statement_variable is None or find_occurrence
+
+
+
+        # elif statement_type == "ConstructorStatement" or statement_type == "FunctionStatement" or statement_type == "MethodStatement":
+        #     arg_list = statement.arg_list
+        #     mutate_list = []
+        #     for i, d in enumerate(testcase.statement_description):
+        #         if type(d).__name__ == "ImportStatement":
+        #             continue
+        #         if d.statement_variable in arg_list:
+        #             mutate_list.append((i, d))
+        #     for s in mutate_list:
+        #         self.mutate_statement(s[0], s[1], testcase)
+
+        if statement_type == "PrimitiveStatement":
+            statement.generate_random_value()
+            statement.generate_statement()
+            print('Statement_orimitive: ', statement.statement)
+            print('Testcase: ', testcase.statement_list)
+            testcase.statement_list[index] = statement.statement
+        elif statement_type == "ConstructorStatement" or statement_type == "FunctionStatement" or statement_type == "MethodStatement":
+            arg_list = statement.arg_list
+            mutate_list = []
+            for i, d in enumerate(testcase.statement_description):
+                if type(d).__name__ == "ImportStatement":
+                    continue
+                if d.statement_variable in arg_list:
+                    mutate_list.append((i, d))
+            for s in mutate_list:
+                self.mutate_statement(s[0], s[1], testcase)
+            statement.generate_statement()
 
     def calculate_fitnesses(self):
         for testsuit in self.population:
             testsuit.find_suite_coverage(self.output_folder_path)
 
+    def clean_suite(self):
+        pass
+
+
     def run_ga(self, epochs):
         self.initialize_population()
-        # print(self.population[0].test_cluster[0].fitness)
-        current_best = []
         self.calculate_fitnesses()
         current_best = []
-        # print(testsuit.suite_coverage)
         for i in range(epochs):
 
             while len(self.population) <= 2*(self.population_size):
                 P1 = self.selection()
                 P2 = self.selection()
-                alpha = random.random()
-                gamma = random.random()
+                print("P1: ", type(P1).__name__)
+                alpha = 0
+                gamma = 0
                 while P1 == P2:
                     P1 = self.selection()
+                print(P1, P2)
+                P1 = copy.deepcopy(P1)
+                P2 = copy.deepcopy(P2)
+                print(P1, P2)
                 if alpha < self.crossover_rate:
                     O1, O2 = self.crossover(P1, P2)
                 else:
                     O1, O2 = P1, P2
+
                 if gamma < self.mutation_rate:
                     self.mutate(O1)
                     self.mutate(O2)
+                O1.find_suite_coverage(self.output_folder_path)
+                O2.find_suite_coverage(self.output_folder_path)
                 self.population.append(O1)
                 self.population.append(O1)
+
+            print("Population: ", self.population)
             self.population.sort(key=lambda testsuit: testsuit.number_of_lines)
             for i in range(self.population_size):
                 current_best.append(self.population[i])
