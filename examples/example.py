@@ -6,6 +6,9 @@
 #
 import queue_example
 
+def addQueue(q: queue_example.Queue, m: int) -> None:
+    q.enqueue(m)
+
 def triangle(x: int, y: int, z: int) -> str:
     if x == y == z:
         return "Equilateral triangle"
@@ -15,5 +18,4 @@ def triangle(x: int, y: int, z: int) -> str:
         return "Scalene triangle"
 
 
-def addQueue(q: queue_example.Queue, m: int) -> None:
-    q.enqueue(m)
+

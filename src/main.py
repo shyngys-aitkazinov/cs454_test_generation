@@ -23,6 +23,8 @@ def append_all_directories(path):
     for (dirpath, dirnames, filenames) in os.walk(path):
         sys.path.append(dirpath)
 
+# def viusalize_results(stats):
+
 
 if __name__ == "__main__":
     parser = OptionParser()
