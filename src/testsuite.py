@@ -55,6 +55,9 @@ class TestSuite(object):
         # print(str(path))
         if not os.path.exists(path):
             os.mkdir(path)
+        else:
+            for f in os.listdir(path):
+                os.remove(os.path.join(path, f))
 
         for testcase in self.test_cluster:
             test_name = "test_" + str(count) + ".py"

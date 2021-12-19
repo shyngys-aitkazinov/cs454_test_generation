@@ -351,6 +351,11 @@ class GA():
 
         return stats
 
+    def save_testsuites(self):
+
+        for test_suite in self.population:
+            test_suite.write_test_suite(self.output_folder_path)
+
     def run_ga(self, epochs):
         self.initialize_population()
         self.initialize_coverage()
@@ -411,4 +416,7 @@ class GA():
                 self.population.append(test_suite)
 
         print("Stats: ", self.stats)
-        return self.population
+        self.save_testsuites()
+
+
+        return self.stats
