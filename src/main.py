@@ -82,4 +82,4 @@ if __name__ == "__main__":
 
     Ga = ga.GA(ga_config)
     Ga.run_ga(options.epochs)
-    print(Ga.run_random_search(options.epochs))
+    # print(Ga.run_random_search(options.epochs))
